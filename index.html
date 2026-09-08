@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th" translate="no" class="notranslate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <title>Anniversary Experience</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <audio id="bgMusic" loop></audio>
+
+    <!-- หน้า 1: ซองกดค้างเพื่อเปิด -->
+    <div class="envelope-overlay" id="envelopeOverlay">
+        <div class="envelope">
+            <p class="envelope-text">ทำให้ล่วงหน้า</p>
+            
+            <div class="hold-container" id="holdContainer">
+                <svg class="progress-ring" width="140" height="140" viewBox="0 0 100 100">
+                    <path class="heart-bg" d="M 50,30 A 15,15 0 0,0 20,30 C 20,48 50,70 50,70 C 50,70 80,48 80,30 A 15,15 0 0,0 50,30 Z" fill="none" stroke="rgba(255, 0, 127, 0.2)" stroke-width="4"/>
+                    <path class="heart-progress" id="heartProgress" d="M 50,30 A 15,15 0 0,0 20,30 C 20,48 50,70 50,70 C 50,70 80,48 80,30 A 15,15 0 0,0 50,30 Z" fill="none" stroke="#ff007f" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <button class="heart-btn" id="holdBtn" aria-label="Hold to Open"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- หน้า 2: ฉาก 3D Galaxy + ปุ่มเมนู -->
+    <div id="canvas-container">
+        <div class="action-btn-group">
+            <button class="btn-love" id="openCardBtn">การ์ดวันครบรอบ</button>
+            <button class="btn-love" id="openTarotBtn">การ์ดทำตามสั่ง</button>
+        </div>
+    </div>
+
+    <!-- หน้า 3: การ์ดวันครบรอบ -->
+    <div class="card" id="card">
+        <div class="cat-avatar-frame">
+            <div class="cat-avatar"></div>
+        </div>
+
+        <p class="card-subtitle-small">รักนะจ๊ะ</p>
+
+        <div class="timer-container">
+            <div class="timer-box">
+                <span class="number" id="days">0</span>
+                <span class="label">วัน</span>
+            </div>
+            <div class="timer-box">
+                <span class="number" id="hours">0</span>
+                <span class="label">ชั่วโมง</span>
+            </div>
+            <div class="timer-box">
+                <span class="number" id="minutes">0</span>
+                <span class="label">นาที</span>
+            </div>
+            <div class="timer-box">
+                <span class="number" id="seconds">0</span>
+                <span class="label">วินาที</span>
+            </div>
+        </div>
+
+        <h2 class="section-title">ไหนบอกรักเค้าด้วย</h2>
+        <p class="card-message-text">บอกรักกกกกกกกกก</p>
+
+        <button class="close-btn" id="closeCardBtn">CLOSE ✖</button>
+    </div>
+
+    <!-- หน้า 4: หน้าเลือกการ์ดทำนาย -->
+    <div class="card tarot-card-modal" id="tarotModal">
+        <div class="tarot-header">
+            <span class="tarot-icon">🃏</span>
+            <h2>การ์ดทำนาย</h2>
+            <p class="tarot-subtitle">เลือก 1 ใบ เพื่อเปิด</p>
+        </div>
+
+        <div class="tarot-deck">
+            <div class="tarot-card" data-title="เกาหลัง" data-desc="เกาหลังให้ชั้นเดี๋ยวนี้">
+                <div class="tarot-inner"><div class="tarot-front">💖💖</div></div>
+            </div>
+            <div class="tarot-card" data-title="เลี้ยงชาบู" data-desc="เธอเลี้ยง">
+                <div class="tarot-inner"><div class="tarot-front">💖💖</div></div>
+            </div>
+            <div class="tarot-card" data-title="นอนดูหนัง" data-desc="อิอิ">
+                <div class="tarot-inner"><div class="tarot-front">💖💖</div></div>
+            </div>
+            <div class="tarot-card" data-title="ให้จุ๊บ100000000" data-desc="55">
+                <div class="tarot-inner"><div class="tarot-front">💖💖</div></div>
+            </div>
+            <div class="tarot-card" data-title="บอกรัก" data-desc="ว้าว">
+                <div class="tarot-inner"><div class="tarot-front">💖💖</div></div>
+            </div>
+        </div>
+
+        <button class="close-btn" id="closeTarotBtn">CLOSE ✖</button>
+    </div>
+
+    <!-- ป๊อบอัพการ์ดผลลัพธ์ -->
+    <div class="card result-card-modal" id="resultModal">
+        <div class="result-box">
+            <h2 id="resultTitle">คำทำนาย</h2>
+            <p id="resultDesc">ผลคำทำนาย...</p>
+            <button class="close-btn" id="closeResultBtn">รับพรนี้เลย 💕</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
