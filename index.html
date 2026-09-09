@@ -10,7 +10,7 @@
 </head>
 <body>
 
-    <!-- เพลงพื้นหลังจาก YouTube -->
+    <!-- เพลงพื้นหลังจาก YouTube: ฝัง player แบบซ่อนไว้ ควบคุมผ่าน script.js -->
     <div id="yt-player" aria-hidden="true"></div>
     <button class="music-toggle-btn" id="musicToggleBtn" aria-label="Toggle music" style="display:none;">🔇</button>
 
@@ -30,7 +30,9 @@
                         </linearGradient>
                     </defs>
 
+                    <!-- เส้นขอบหัวใจเรืองแสง -->
                     <path class="heart-outline" d="M 50,28 A 18,18 0 0,0 18,28 C 18,48 50,75 50,75 C 50,75 82,48 82,28 A 18,18 0 0,0 50,28 Z" />
+                    <!-- ตัวหัวใจที่จะค่อยๆ เติมสีขึ้นมาจากข้างล่าง -->
                     <path class="heart-fill-path" fill="url(#heartGradient)" d="M 50,28 A 18,18 0 0,0 18,28 C 18,48 50,75 50,75 C 50,75 82,48 82,28 A 18,18 0 0,0 50,28 Z" />
                 </svg>
                
