@@ -519,33 +519,41 @@ function init3DOceanScene() {
         texture.generateMipmaps = true;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
 
-        const photoGeo = new THREE.CircleGeometry(2.5, 32);
+        // 🛠️ คำนวณ Aspect Ratio เพื่อไม่ให้รูปโดนบีบ/ยืด ตัดขอบออกให้อยู่ทรงกลมสมบูรณ์
+        const imageAspect = texture.image.width / texture.image.height;
+        if (imageAspect > 1) {
+            texture.repeat.set(1 / imageAspect, 1);
+            texture.offset.set((1 - 1 / imageAspect) / 2, 0);
+        } else if (imageAspect < 1) {
+            texture.repeat.set(1, imageAspect);
+            texture.offset.set(0, (1 - imageAspect) / 2);
+        }
+
+        const photoGeo = new THREE.CircleGeometry(2.3, 64);
         const photoMat = new THREE.MeshBasicMaterial({
             map: texture,
             side: THREE.DoubleSide,
             transparent: true,
-            opacity: 1.0,
-            depthTest: false,
-            depthWrite: false
+            opacity: 0.95
         });
         photoMesh = new THREE.Mesh(photoGeo, photoMat);
-        photoMesh.position.set(0, 0.5, 0.5);
-        photoMesh.renderOrder = 999;
+        photoMesh.position.set(0, 0, 0);
+        photoMesh.renderOrder = 10;
         coralHeartGroup.add(photoMesh);
 
-        const ringGlowGeo = new THREE.RingGeometry(2.52, 2.75, 32);
+        // วงแหวนเรืองแสงขอบรูป
+        const ringGlowGeo = new THREE.RingGeometry(2.32, 2.55, 64);
         const ringGlowMat = new THREE.MeshBasicMaterial({
             color: 0x35e6ff,
             side: THREE.DoubleSide,
             transparent: true,
             opacity: 0.85,
             blending: THREE.AdditiveBlending,
-            depthTest: false,
             depthWrite: false
         });
         const ringGlow = new THREE.Mesh(ringGlowGeo, ringGlowMat);
-        ringGlow.position.set(0, 0.5, 0.51);
-        ringGlow.renderOrder = 1000;
+        ringGlow.position.set(0, 0, 0.01);
+        ringGlow.renderOrder = 11;
         coralHeartGroup.add(ringGlow);
     }, undefined, (err) => {
         console.error('โหลดรูป ' + PHOTO_URL + ' ไม่สำเร็จ:', err);
@@ -888,11 +896,6 @@ function init3DOceanScene() {
                 const s = node.baseScale * (1 + Math.sin(elapsedTime * 3 + node.phase) * 0.2);
                 node.mesh.scale.set(s, s, s);
             });
-
-            // หมุนแผ่นรูปภาพให้หันหน้าเข้าหากล้องตลอดเวลา
-            if (photoMesh) {
-                photoMesh.lookAt(camera.position);
-            }
 
             targetX += (mouseX - targetX) * Math.min(0.04 * frameScale, 1);
             targetY += (mouseY - targetY) * Math.min(0.04 * frameScale, 1);
