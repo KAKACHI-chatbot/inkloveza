@@ -1,45 +1,43 @@
 // 📸 ลิงก์รูปภาพคู่ของคุณ (นำรูปคู่ไปวางไว้ในโฟลเดอร์เดียวกับ script.js แล้วตั้งชื่อว่า couple.jpg)
-// --- 📸 โหลดและแสดงผลรูปคู่ 3D ทรงกลมตรงกลางปะการัง (Couple Photo Portal) ---
-    const textureLoader = new THREE.TextureLoader();
-    let photoMesh = null;
+const PHOTO_URL = './couple.jpg';
 
-    textureLoader.load('./couple.jpg', (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.generateMipmaps = true;
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
+const startDate = new Date(2025, 7, 15, 0, 0, 0);
 
-        const photoGeo = new THREE.CircleGeometry(2.5, 32); // ปรับขนาดเพิ่มเป็น 2.5
-        const photoMat = new THREE.MeshBasicMaterial({
-            map: texture,
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 1.0,           // ปรับเป็น 1.0 ให้เห็นชัดเจน
-            depthTest: false,       // 👈 ปิด depthTest เพื่อไม่ให้แสงมืดหรือวัตถุ 3D ชิ้นอื่นบัง
-            depthWrite: false
-        });
-        photoMesh = new THREE.Mesh(photoGeo, photoMat);
-        photoMesh.position.set(0, 0.5, 0.5); // 👈 ขยับขยับมาด้านหน้าเล็กน้อย (Z = 0.5)
-        photoMesh.renderOrder = 999;          // 👈 สั่งให้วาดทับเหนือปะการังและแสงสีมืดทั้งหมด
-        coralHeartGroup.add(photoMesh);
+function pulseSeconds() {
+    const el = document.getElementById('seconds');
+    if (!el) return;
+    el.classList.remove('tick-pulse');
+    void el.offsetWidth;
+    el.classList.add('tick-pulse');
+}
 
-        // วงแหวนเรืองแสงขอบรูป
-        const ringGlowGeo = new THREE.RingGeometry(2.52, 2.75, 32);
-        const ringGlowMat = new THREE.MeshBasicMaterial({
-            color: 0x35e6ff,
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.85,
-            blending: THREE.AdditiveBlending,
-            depthTest: false,
-            depthWrite: false
-        });
-        const ringGlow = new THREE.Mesh(ringGlowGeo, ringGlowMat);
-        ringGlow.position.set(0, 0.5, 0.51);
-        ringGlow.renderOrder = 1000;
-        coralHeartGroup.add(ringGlow);
-    }, undefined, (err) => {
-        console.error('โหลดรูป ./couple.jpg ไม่สำเร็จ:', err);
-    });
+function updateCounter() {
+    const now = new Date();
+    const diff = now - startDate;
+
+    if (diff < 0) {
+        document.getElementById('days').innerText = '0';
+        document.getElementById('hours').innerText = '00';
+        document.getElementById('minutes').innerText = '00';
+        document.getElementById('seconds').innerText = '00';
+        return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    document.getElementById('days').innerText = days;
+    document.getElementById('hours').innerText = String(hours).padStart(2, '0');
+    document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
+    document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
+    pulseSeconds();
+}
+
+setInterval(updateCounter, 1000);
+updateCounter();
+
 // ==================== เพลงพื้นหลังจาก YouTube ====================
 const YT_VIDEO_ID = "LXIEBWnqiBA";
 
@@ -521,34 +519,36 @@ function init3DOceanScene() {
         texture.generateMipmaps = true;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
 
-        const photoGeo = new THREE.CircleGeometry(2.3, 32);
+        const photoGeo = new THREE.CircleGeometry(2.5, 32);
         const photoMat = new THREE.MeshBasicMaterial({
             map: texture,
             side: THREE.DoubleSide,
             transparent: true,
-            opacity: 0.95
-            
+            opacity: 1.0,
+            depthTest: false,
+            depthWrite: false
         });
         photoMesh = new THREE.Mesh(photoGeo, photoMat);
-        photoMesh.position.set(0, 0.2, 0);
-        photoMesh.renderOrder = 10; // วาดรูปทีหลังสุด กันไม่ให้ปะการัง/แสงอื่นบังตอนกล้องหมุน
+        photoMesh.position.set(0, 0.5, 0.5);
+        photoMesh.renderOrder = 999;
         coralHeartGroup.add(photoMesh);
 
-        const ringGlowGeo = new THREE.RingGeometry(2.32, 2.55, 32);
+        const ringGlowGeo = new THREE.RingGeometry(2.52, 2.75, 32);
         const ringGlowMat = new THREE.MeshBasicMaterial({
             color: 0x35e6ff,
             side: THREE.DoubleSide,
             transparent: true,
             opacity: 0.85,
             blending: THREE.AdditiveBlending,
+            depthTest: false,
             depthWrite: false
         });
         const ringGlow = new THREE.Mesh(ringGlowGeo, ringGlowMat);
-        ringGlow.position.set(0, 0.2, 0.01);
-        ringGlow.renderOrder = 11; // วงแหวนเรืองแสงวาดทับรูปได้ แต่ไม่บังทั้งใบ
+        ringGlow.position.set(0, 0.5, 0.51);
+        ringGlow.renderOrder = 1000;
         coralHeartGroup.add(ringGlow);
     }, undefined, (err) => {
-        console.error('โหลดรูป couple.jpg ไม่สำเร็จ:', err);
+        console.error('โหลดรูป ' + PHOTO_URL + ' ไม่สำเร็จ:', err);
     });
 
     const centerGlowGeo = new THREE.SphereGeometry(2.8, 24, 24);
