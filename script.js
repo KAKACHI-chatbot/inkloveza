@@ -1,5 +1,5 @@
 // 📸 ลิงก์รูปภาพคู่ของคุณ (นำรูปคู่ไปวางไว้ในโฟลเดอร์เดียวกับ script.js แล้วตั้งชื่อว่า couple.jpg)
-const PHOTO_URL = 'couple.jpg';
+const PHOTO_URL = './couple.jpg';
 
 const startDate = new Date(2025, 7, 15, 0, 0, 0);
 
@@ -525,6 +525,7 @@ function init3DOceanScene() {
             side: THREE.DoubleSide,
             transparent: true,
             opacity: 0.95
+            
         });
         photoMesh = new THREE.Mesh(photoGeo, photoMat);
         photoMesh.position.set(0, 0.2, 0);
