@@ -331,11 +331,12 @@ button:focus-visible,
 }
 
 /* ==================== ป๊อบอัพการ์ด (พื้นฐานร่วม) ==================== */
+/* ==================== ป๊อบอัพการ์ด (พื้นฐานร่วม) ==================== */
 .card {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) scale(0.9) !important;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
 
     background: linear-gradient(165deg, rgba(10, 32, 65, 0.97), rgba(3, 13, 30, 0.98));
     backdrop-filter: blur(18px);
@@ -352,7 +353,7 @@ button:focus-visible,
         0 0 60px rgba(53, 230, 255, 0.22),
         var(--shadow-lift);
 
-    display: none !important;
+    display: none;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -372,7 +373,6 @@ button:focus-visible,
     pointer-events: auto !important;
     transform: translate(-50%, -50%) scale(1) !important;
 }
-
 /* ==================== การ์ดวันครบรอบ ==================== */
 .cat-avatar-frame {
     width: 90px;
@@ -824,4 +824,30 @@ button:focus-visible,
 .action-btn-group.ready {
     opacity: 1 !important;
     pointer-events: auto !important;
+}
+
+/* ข้อความบอกให้กดค้าง */
+.click-hint {
+    color: var(--cyan);
+    font-size: 0.9rem;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 8px rgba(53, 230, 255, 0.6);
+    margin-top: -10px;
+    transition: color 0.3s ease, transform 0.3s ease;
+    animation: float-hint 2s ease-in-out infinite alternate;
+}
+
+@keyframes float-hint {
+    from { transform: translateY(0); opacity: 0.8; }
+    to { transform: translateY(-4px); opacity: 1; }
+}
+
+/* เอฟเฟกต์ซองเรืองแสงมากขึ้น */
+.envelope {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 0 30px rgba(53, 230, 255, 0.15),
+        0 0 25px rgba(53, 230, 255, 0.3),
+        var(--shadow-lift);
 }
