@@ -116,7 +116,7 @@ if (holdBtn) {
     holdBtn.addEventListener('mousedown', startHold);
     holdBtn.addEventListener('mouseup', endHold);
     holdBtn.addEventListener('mouseleave', endHold);
-    holdBtn.addEventListener('touchstart', startHold);
+    holdBtn.addEventListener('touchstart', startHold, { passive: false });
     holdBtn.addEventListener('touchend', endHold);
     holdBtn.addEventListener('touchcancel', endHold);
 }
@@ -163,7 +163,7 @@ window.addEventListener('pointermove', (e) => {
     if (canvasContainer && canvasContainer.classList.contains('show')) {
         maybeSpawnSpark(e.clientX, e.clientY);
     }
-});
+}, { passive: true });
 
 // ==================== ลูกเล่นเสริม: ปุ่มกดมีคลื่นกระเพื่อม ====================
 function attachRipple(btn) {
@@ -177,7 +177,7 @@ function attachRipple(btn) {
         span.style.top = (e.clientY - rect.top - size / 2) + 'px';
         btn.appendChild(span);
         span.addEventListener('animationend', () => span.remove());
-    });
+    }, { passive: true });
 }
 document.querySelectorAll('.btn-love, .close-btn').forEach(attachRipple);
 
@@ -216,10 +216,22 @@ const tarotModal = document.getElementById('tarotModal');
 const resultModal = document.getElementById('resultModal');
 const actionBtnGroup = document.querySelector('.action-btn-group');
 
+// เมื่อป๊อบอัพเปิดอยู่ ให้ฉาก 3D "หยุดคำนวณ" อนุภาคที่มองไม่เห็น (ยังหมุนกล้อง/กาแล็กซี่เบาๆ ได้)
+// เพื่อลดภาระ GPU ตอน backdrop-filter blur ทำงานหนักอยู่แล้ว
+let anyModalOpen = false;
+function refreshModalState() {
+    anyModalOpen = !!(
+        (card && card.classList.contains('show')) ||
+        (tarotModal && tarotModal.classList.contains('show')) ||
+        (resultModal && resultModal.classList.contains('show'))
+    );
+}
+
 if (openCardBtn) {
     openCardBtn.addEventListener('click', () => {
         if (card) card.classList.add('show');
         if (actionBtnGroup) actionBtnGroup.style.display = 'none';
+        refreshModalState();
     });
 }
 
@@ -227,6 +239,7 @@ if (closeCardBtn) {
     closeCardBtn.addEventListener('click', () => {
         if (card) card.classList.remove('show');
         if (actionBtnGroup) actionBtnGroup.style.display = 'flex';
+        refreshModalState();
     });
 }
 
@@ -234,6 +247,7 @@ if (openTarotBtn) {
     openTarotBtn.addEventListener('click', () => {
         if (tarotModal) tarotModal.classList.add('show');
         if (actionBtnGroup) actionBtnGroup.style.display = 'none';
+        refreshModalState();
     });
 }
 
@@ -241,6 +255,7 @@ if (closeTarotBtn) {
     closeTarotBtn.addEventListener('click', () => {
         if (tarotModal) tarotModal.classList.remove('show');
         if (actionBtnGroup) actionBtnGroup.style.display = 'flex';
+        refreshModalState();
     });
 }
 
@@ -266,6 +281,7 @@ tarotCards.forEach(c => {
                     spawnHeartBurst(resultModal);
                 }
                 c.classList.remove('flipped');
+                refreshModalState();
             }, 200);
         }, 480);
     });
@@ -275,18 +291,33 @@ if (closeResultBtn) {
     closeResultBtn.addEventListener('click', () => {
         if (resultModal) resultModal.classList.remove('show');
         if (actionBtnGroup) actionBtnGroup.style.display = 'flex';
+        refreshModalState();
     });
 }
 
-// ==================== ระบบเรนเดอร์ฉาก 3D ====================
+// ==================== ระบบเรนเดอร์ฉาก 3D (ปรับให้ลื่นขึ้น) ====================
 function init3DScene() {
+    // --- ตรวจสเปคเครื่องคร่าวๆ เพื่อปรับความละเอียดอนุภาคอัตโนมัติ ---
+    const cores = navigator.hardwareConcurrency || 4;
+    const isNarrow = window.innerWidth <= 768;
+    const isLowPower = isNarrow || cores <= 4;
+
+    const heartParticlesCount = isLowPower ? 3200 : 6500;
+    const galaxyCount = isLowPower ? 4200 : 8500;
+    const starsCount = isLowPower ? 1200 : 2500;
+
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 7, 20);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({
+        antialias: !isLowPower,
+        alpha: true,
+        powerPreference: 'high-performance'
+    });
+    // จำกัด pixel ratio ไว้ที่ 2 (จอ retina/มือถือบางรุ่นสูงถึง 3-4 ซึ่งหนักเกินจำเป็น)
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isLowPower ? 1.5 : 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
     if (canvasContainer) canvasContainer.insertBefore(renderer.domElement, canvasContainer.firstChild);
 
     const centerLight = new THREE.PointLight(0xff007f, 2, 50);
@@ -294,7 +325,6 @@ function init3DScene() {
     scene.add(centerLight);
 
     const starsGeometry = new THREE.BufferGeometry();
-    const starsCount = 2500;
     const starsPositions = new Float32Array(starsCount * 3);
     for (let i = 0; i < starsCount * 3; i++) {
         starsPositions[i] = (Math.random() - 0.5) * 140;
@@ -303,7 +333,6 @@ function init3DScene() {
     const starField = new THREE.Points(starsGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.5 }));
     scene.add(starField);
 
-    const heartParticlesCount = 6500;
     const heartGeometry = new THREE.BufferGeometry();
     const currentPositions = new Float32Array(heartParticlesCount * 3);
     const targetPositions = new Float32Array(heartParticlesCount * 3);
@@ -338,6 +367,7 @@ function init3DScene() {
     }
 
     heartGeometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
+    heartGeometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
     const heartMaterial = new THREE.PointsMaterial({
         color: 0xff33bb,
         size: 0.22,
@@ -349,7 +379,6 @@ function init3DScene() {
     scene.add(heartParticles);
 
     const galaxyGeometry = new THREE.BufferGeometry();
-    const galaxyCount = 8500;
     const galaxyPositions = new Float32Array(galaxyCount * 3);
     const galaxyColors = new Float32Array(galaxyCount * 3);
     const color1 = new THREE.Color(0xff007f);
@@ -442,9 +471,18 @@ function init3DScene() {
         ringGroup.add(sprite);
     });
 
+    // --- พลุ: จำกัดจำนวนพลุพร้อมกันสูงสุด กันสแปมคลิกจนหนักเครื่อง ---
     const fireworks = [];
+    const MAX_FIREWORKS = isLowPower ? 4 : 8;
+    let lastFireworkTime = 0;
+
     function createFirework(x, y) {
-        const pCount = 80;
+        const now = performance.now();
+        if (now - lastFireworkTime < 60) return; // กันสแปมเร็วเกินไป
+        if (fireworks.length >= MAX_FIREWORKS) return;
+        lastFireworkTime = now;
+
+        const pCount = isLowPower ? 45 : 80;
         const pGeo = new THREE.BufferGeometry();
         const pPos = new Float32Array(pCount * 3);
         const pVelo = [];
@@ -463,6 +501,7 @@ function init3DScene() {
         }
 
         pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+        pGeo.attributes.position.setUsage(THREE.DynamicDrawUsage);
         const firework = new THREE.Points(pGeo, new THREE.PointsMaterial({
             color: Math.random() > 0.5 ? 0x00f0ff : 0xff007f,
             size: 0.22,
@@ -475,29 +514,38 @@ function init3DScene() {
     }
 
     window.addEventListener('pointerdown', (e) => {
-        if (canvasContainer && canvasContainer.classList.contains('show') &&
-            (!card || !card.classList.contains('show')) &&
-            (!tarotModal || !tarotModal.classList.contains('show')) &&
-            (!resultModal || !resultModal.classList.contains('show'))) {
+        if (canvasContainer && canvasContainer.classList.contains('show') && !anyModalOpen) {
             createFirework(e.clientX, e.clientY);
         }
-    });
+    }, { passive: true });
 
     let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
     window.addEventListener('mousemove', (e) => {
         mouseX = (e.clientX - window.innerWidth / 2) * 0.0008;
         mouseY = (e.clientY - window.innerHeight / 2) * 0.0008;
-    });
+    }, { passive: true });
 
     const clock = new THREE.Clock();
+    // อ้างอิงต่อ 60fps เป็นฐาน เพื่อให้ lerp/rotation คงที่ไม่ว่าเฟรมเรตจริงจะเป็นเท่าไร
+    const REFERENCE_FPS = 60;
+
+    let rafId = null;
+    let isRunning = true;
 
     function animate() {
-        requestAnimationFrame(animate);
-        const elapsedTime = clock.getElapsedTime();
+        if (!isRunning) return;
+        rafId = requestAnimationFrame(animate);
+
+        const rawDelta = clock.getDelta();
+        // กันเฟรมกระโดดตอนสลับแท็บกลับมา (คลิปไว้ไม่เกิน ~3 เฟรม)
+        const delta = Math.min(rawDelta, 3 / REFERENCE_FPS);
+        const frameScale = delta * REFERENCE_FPS; // 1.0 ที่ 60fps พอดี
+
+        const elapsedTime = clock.elapsedTime;
         const positions = heartGeometry.attributes.position.array;
 
         if (elapsedTime < 1.8) {
-            const burstSpeed = 0.08;
+            const burstSpeed = 1 - Math.pow(1 - 0.08, frameScale);
             centerLight.intensity = 10;
             for (let i = 0; i < heartParticlesCount; i++) {
                 const idx = i * 3;
@@ -506,7 +554,7 @@ function init3DScene() {
                 positions[idx + 2] += (burstVelocities[idx + 2] - positions[idx + 2]) * burstSpeed;
             }
         } else {
-            const formSpeed = 0.035;
+            const formSpeed = 1 - Math.pow(1 - 0.035, frameScale);
             centerLight.intensity = 4 + Math.sin(elapsedTime * 3) * 2;
             for (let i = 0; i < heartParticlesCount; i++) {
                 const idx = i * 3;
@@ -523,23 +571,28 @@ function init3DScene() {
         for (let i = fireworks.length - 1; i >= 0; i--) {
             const fw = fireworks[i];
             const fwPos = fw.mesh.geometry.attributes.position.array;
-            fw.life -= 0.02;
-            fw.mesh.material.opacity = fw.life;
+            fw.life -= 0.02 * frameScale;
+            fw.mesh.material.opacity = Math.max(fw.life, 0);
             for (let j = 0; j < fwPos.length / 3; j++) {
-                fwPos[j * 3] += fw.velo[j].x;
-                fwPos[j * 3 + 1] += fw.velo[j].y;
-                fwPos[j * 3 + 2] += fw.velo[j].z;
+                fwPos[j * 3] += fw.velo[j].x * frameScale;
+                fwPos[j * 3 + 1] += fw.velo[j].y * frameScale;
+                fwPos[j * 3 + 2] += fw.velo[j].z * frameScale;
             }
             fw.mesh.geometry.attributes.position.needsUpdate = true;
-            if (fw.life <= 0) { scene.remove(fw.mesh); fireworks.splice(i, 1); }
+            if (fw.life <= 0) {
+                scene.remove(fw.mesh);
+                fw.mesh.geometry.dispose();
+                fw.mesh.material.dispose();
+                fireworks.splice(i, 1);
+            }
         }
 
-        heartParticles.rotation.y += 0.004;
-        galaxyParticles.rotation.y += 0.002;
-        ringGroup.rotation.y += 0.0025;
+        heartParticles.rotation.y += 0.004 * frameScale;
+        galaxyParticles.rotation.y += 0.002 * frameScale;
+        ringGroup.rotation.y += 0.0025 * frameScale;
 
-        targetX += (mouseX - targetX) * 0.05;
-        targetY += (mouseY - targetY) * 0.05;
+        targetX += (mouseX - targetX) * Math.min(0.05 * frameScale, 1);
+        targetY += (mouseY - targetY) * Math.min(0.05 * frameScale, 1);
         camera.position.x = Math.sin(targetX) * 20;
         camera.position.z = Math.cos(targetX) * 20;
         camera.position.y = 7 + targetY * 8;
@@ -550,9 +603,27 @@ function init3DScene() {
 
     animate();
 
+    // หยุดเรนเดอร์ตอนสลับแท็บ/มินิไมซ์ เพื่อไม่ให้กินแบตและ CPU/GPU เปล่าๆ
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            isRunning = false;
+            if (rafId) cancelAnimationFrame(rafId);
+        } else {
+            if (!isRunning) {
+                isRunning = true;
+                clock.getDelta(); // เคลียร์เวลาที่ค้างไว้ตอนซ่อนอยู่ ไม่ให้กระโดด
+                animate();
+            }
+        }
+    });
+
+    let resizeTimer = null;
     window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }, 120);
     });
 }

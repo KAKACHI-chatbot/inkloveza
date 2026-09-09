@@ -52,7 +52,6 @@ body {
     background: rgba(255, 47, 143, 0.35);
 }
 
-/* Slim glowing scrollbar for scrollable cards */
 .card::-webkit-scrollbar { width: 5px; }
 .card::-webkit-scrollbar-thumb {
     background: var(--pink);
@@ -253,8 +252,9 @@ button:focus-visible,
     border-radius: 60px;
     background: rgba(10, 4, 18, 0.55);
     border: 1px solid rgba(255, 47, 143, 0.25);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    /* ลด blur ลงจาก 14px เพื่อลดภาระ GPU ตอนฉาก 3D กำลังเรนเดอร์อยู่ข้างหลัง */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     opacity: 0;
     pointer-events: none;
     transition: opacity 1s ease 1.5s, transform 0.3s ease;
@@ -298,8 +298,9 @@ button:focus-visible,
     transform: translate(-50%, -50%) scale(0.85) !important;
 
     background: linear-gradient(165deg, rgba(22, 10, 34, 0.96), rgba(9, 4, 16, 0.97));
-    backdrop-filter: blur(26px);
-    -webkit-backdrop-filter: blur(26px);
+    /* ลด blur จาก 26px เหลือ 16px: ยังดูมี glass effect แต่เบาลงมากตอนมีฉาก 3D วิ่งอยู่ */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1.5px solid var(--surface-border);
     border-radius: 30px;
     padding: 38px 24px 28px;
@@ -554,7 +555,6 @@ button:focus-visible,
 
 /* ==================== ลูกเล่นเสริม ==================== */
 
-/* หัวใจลอยพื้นหลังตอนอยู่หน้ากาแล็กซี */
 .ambient-hearts {
     position: absolute;
     inset: 0;
@@ -580,7 +580,6 @@ button:focus-visible,
     100% { transform: translateY(-115vh) scale(1.1); opacity: 0; }
 }
 
-/* ประกายตามเคอร์เซอร์ */
 .cursor-spark {
     position: fixed;
     pointer-events: none;
@@ -597,7 +596,6 @@ button:focus-visible,
     100% { transform: translate(-50%, -170%) scale(1.1); opacity: 0; }
 }
 
-/* คลื่นกระเพื่อมตอนกดปุ่ม */
 .btn-love, .close-btn {
     position: relative;
     overflow: hidden;
@@ -616,7 +614,6 @@ button:focus-visible,
     to { transform: scale(2.6); opacity: 0; }
 }
 
-/* ซองสั่นเบา ๆ ตอนใกล้ปลดล็อกสำเร็จ */
 @keyframes shake-love {
     0%, 100% { transform: rotate(0deg); }
     25%      { transform: rotate(-1deg); }
@@ -627,7 +624,6 @@ button:focus-visible,
     animation: shake-love 0.28s ease-in-out infinite;
 }
 
-/* ไพ่ทำนายหมุนพลิกตอนเลือก */
 .tarot-card {
     perspective: 700px;
 }
@@ -645,7 +641,6 @@ button:focus-visible,
     box-shadow: 0 0 26px var(--pink), 0 0 50px rgba(255, 47, 143, 0.7);
 }
 
-/* ตัวเลขวินาทีเด้งทุกติ๊ก */
 @keyframes tick-pop {
     0%   { transform: scale(1); }
     35%  { transform: scale(1.3); }
@@ -656,7 +651,6 @@ button:focus-visible,
     animation: tick-pop 0.35s ease;
 }
 
-/* หัวใจระเบิดตอนเปิดผลลัพธ์ */
 .heart-burst-wrap {
     position: fixed;
     left: 0;
