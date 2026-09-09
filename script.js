@@ -519,7 +519,7 @@ function init3DOceanScene() {
         texture.generateMipmaps = true;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
 
-        // 🛠️ คำนวณ Aspect Ratio เพื่อไม่ให้รูปโดนบีบ/ยืด ตัดขอบออกให้อยู่ทรงกลมสมบูรณ์
+        // คำนวณ Aspect Ratio ตัดเป็นวงกลมสมบูรณ์
         const imageAspect = texture.image.width / texture.image.height;
         if (imageAspect > 1) {
             texture.repeat.set(1 / imageAspect, 1);
@@ -532,9 +532,10 @@ function init3DOceanScene() {
         const photoGeo = new THREE.CircleGeometry(2.3, 64);
         const photoMat = new THREE.MeshBasicMaterial({
             map: texture,
-            side: THREE.DoubleSide,
+            side: THREE.DoubleSide, // แสดงผลทั้ง 2 ด้าน
             transparent: true,
-            opacity: 0.95
+            opacity: 0.95,
+            depthWrite: false
         });
         photoMesh = new THREE.Mesh(photoGeo, photoMat);
         photoMesh.position.set(0, 0, 0);
