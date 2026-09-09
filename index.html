@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <title>Anniversary Experience</title>
+    <title>Anniversary Experience - Ocean of Love</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -14,23 +14,43 @@
     <div id="yt-player" aria-hidden="true"></div>
     <button class="music-toggle-btn" id="musicToggleBtn" aria-label="Toggle music" style="display:none;">🔇</button>
 
-    <!-- หน้า 1: ซองกดค้างเพื่อเปิด -->
+    <!-- หน้า 1: ซองกดค้างรูปหัวใจเพื่อเปิด -->
     <div class="envelope-overlay" id="envelopeOverlay">
         <div class="envelope">
             <p class="envelope-text">ทำให้ล่วงหน้า</p>
             
             <div class="hold-container" id="holdContainer">
-                <svg class="progress-ring" width="140" height="140" viewBox="0 0 100 100">
-                    <path class="heart-bg" d="M 50,30 A 15,15 0 0,0 20,30 C 20,48 50,70 50,70 C 50,70 80,48 80,30 A 15,15 0 0,0 50,30 Z" fill="none" stroke="rgba(255, 0, 127, 0.2)" stroke-width="4"/>
-                    <path class="heart-progress" id="heartProgress" d="M 50,30 A 15,15 0 0,0 20,30 C 20,48 50,70 50,70 C 50,70 80,48 80,30 A 15,15 0 0,0 50,30 Z" fill="none" stroke="#ff007f" stroke-width="4" stroke-linecap="round"/>
+                <svg class="heart-fill-svg" viewBox="0 0 100 100">
+                    <defs>
+                        <!-- Gradient เติมสีหัวใจจากล่างขึ้นบน -->
+                        <linearGradient id="heartGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#ff2f8f" id="gradStop1" />
+                            <stop offset="0%" stop-color="#ff6fb0" id="gradStop2" />
+                            <stop offset="0%" stop-color="rgba(255, 255, 255, 0.15)" id="gradStop3" />
+                            <stop offset="100%" stop-color="rgba(255, 255, 255, 0.15)" id="gradStop4" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- เส้นขอบหัวใจเรืองแสง -->
+                    <path class="heart-outline" d="M 50,28 A 18,18 0 0,0 18,28 C 18,48 50,75 50,75 C 50,75 82,48 82,28 A 18,18 0 0,0 50,28 Z" />
+                    <!-- ตัวหัวใจที่จะค่อยๆ เติมสีขึ้นมาจากข้างล่าง -->
+                    <path class="heart-fill-path" fill="url(#heartGradient)" d="M 50,28 A 18,18 0 0,0 18,28 C 18,48 50,75 50,75 C 50,75 82,48 82,28 A 18,18 0 0,0 50,28 Z" />
                 </svg>
+               
                 <button class="heart-btn" id="holdBtn" aria-label="Hold to Open"></button>
             </div>
         </div>
     </div>
 
-    <!-- หน้า 2: ฉาก 3D Galaxy + ปุ่มเมนู -->
+    <!-- หน้า 2: ฉาก 3D Ocean + ปุ่มเมนู -->
+    <!-- หน้า 2: ฉาก 3D Ocean + ปุ่มเมนู -->
     <div id="canvas-container">
+        <!-- ข้อความอินโทรตอนดำดิ่งใต้น้ำ -->
+        <div class="intro-overlay-text" id="introOverlayText">
+            <p class="intro-title">Diving into the Ocean of Love...</p>
+            <span class="intro-sub">สัมผัสโลกใต้น้ำแห่งความรัก ✨</span>
+        </div>
+
         <div class="action-btn-group">
             <button class="btn-love" id="openCardBtn">การ์ดวันครบรอบ</button>
             <button class="btn-love" id="openTarotBtn">การ์ดทำตามสั่ง</button>

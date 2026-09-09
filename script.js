@@ -4,7 +4,7 @@ function pulseSeconds() {
     const el = document.getElementById('seconds');
     if (!el) return;
     el.classList.remove('tick-pulse');
-    void el.offsetWidth; // reflow to restart the animation every tick
+    void el.offsetWidth;
     el.classList.add('tick-pulse');
 }
 
@@ -36,20 +36,17 @@ setInterval(updateCounter, 1000);
 updateCounter();
 
 // ==================== เพลงพื้นหลังจาก YouTube ====================
-// วิธีใส่เพลง: เอา Video ID จากลิงก์ YouTube มาใส่ตรงนี้
-// เช่น https://www.youtube.com/watch?v=dQw4w9WgXcQ  -> ID คือ "dQw4w9WgXcQ"
-// หรือ https://youtu.be/dQw4w9WgXcQ                  -> ID คือ "dQw4w9WgXcQ" เช่นกัน
 const YT_VIDEO_ID = "LXIEBWnqiBA";
 
 let ytPlayer = null;
 let ytIsReady = false;
-let ytWantsToPlay = false; // true เมื่อผู้ใช้ปลดล็อกซองแล้ว (ถือว่ามี user gesture)
+let ytWantsToPlay = false;
 let ytMuted = false;
 
 function extractYouTubeId(url) {
     if (!url) return null;
     const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
-    return match ? match[1] : url; // ถ้า string ที่ให้มาเป็น ID อยู่แล้ว ก็ใช้ได้ตรงๆ
+    return match ? match[1] : url;
 }
 
 function loadYouTubeAPI() {
@@ -79,18 +76,16 @@ function createYTPlayer() {
             modestbranding: 1,
             playsinline: 1,
             loop: 1,
-            playlist: videoId // จำเป็นสำหรับให้ loop:1 ทำงานกับวิดีโอเดี่ยว
+            playlist: videoId
         },
         events: {
             onReady: () => {
                 ytIsReady = true;
                 const musicBtn = document.getElementById('musicToggleBtn');
                 if (musicBtn) musicBtn.style.display = 'flex';
-                // ถ้าผู้ใช้ปลดล็อกซองไปแล้วก่อนที่ player จะโหลดเสร็จ ให้เล่นทันที
                 if (ytWantsToPlay) tryPlayMusic();
             },
             onError: () => {
-                // เล่นไม่ได้ (เช่น วิดีโอถูกจำกัดการฝัง) - ซ่อนปุ่มไปเลย
                 const musicBtn = document.getElementById('musicToggleBtn');
                 if (musicBtn) musicBtn.style.display = 'none';
             }
@@ -104,9 +99,7 @@ function tryPlayMusic() {
         ytPlayer.playVideo();
         const musicBtn = document.getElementById('musicToggleBtn');
         if (musicBtn) musicBtn.textContent = '🔊';
-    } catch (err) {
-        // เบราว์เซอร์บล็อก autoplay เสียง - ให้ผู้ใช้กดปุ่มลำโพงเองแทน
-    }
+    } catch (err) {}
 }
 
 const musicToggleBtn = document.getElementById('musicToggleBtn');
@@ -114,7 +107,6 @@ if (musicToggleBtn) {
     musicToggleBtn.addEventListener('click', () => {
         if (!ytPlayer || !ytIsReady) return;
         const state = ytPlayer.getPlayerState();
-        // 1 = playing
         if (state === 1 && !ytMuted) {
             ytPlayer.mute();
             ytMuted = true;
@@ -132,44 +124,45 @@ if (musicToggleBtn) {
 
 loadYouTubeAPI();
 
-// ==================== ระบบกดค้างที่หน้า 1 ====================
+// ==================== ระบบกดค้างรูปหัวใจที่หน้า 1 ====================
 const holdBtn = document.getElementById('holdBtn');
 const holdContainer = document.getElementById('holdContainer');
-const heartProgress = document.getElementById('heartProgress');
 const hintText = document.getElementById('hintText');
 const envelopeOverlay = document.getElementById('envelopeOverlay');
 const envelopeCard = document.querySelector('.envelope');
 const canvasContainer = document.getElementById('canvas-container');
 
-let pathLength = 0;
-if (heartProgress) {
-    pathLength = heartProgress.getTotalLength();
-    heartProgress.style.strokeDasharray = pathLength;
-    heartProgress.style.strokeDashoffset = pathLength;
-}
+const gradStop1 = document.getElementById('gradStop1');
+const gradStop2 = document.getElementById('gradStop2');
+const gradStop3 = document.getElementById('gradStop3');
+const gradStop4 = document.getElementById('gradStop4');
 
 let holdTimer = null;
 let holdProgressVal = 0;
 const holdDuration = 1500;
 const updateInterval = 20;
 
-function setProgress(percent) {
-    if (!heartProgress) return;
-    const offset = pathLength - (percent / 100 * pathLength);
-    heartProgress.style.strokeDashoffset = offset;
+function setHeartFill(percent) {
+    const pStr = percent + '%';
+    if (gradStop1) gradStop1.setAttribute('offset', pStr);
+    if (gradStop2) gradStop2.setAttribute('offset', pStr);
+    if (gradStop3) gradStop3.setAttribute('offset', pStr);
+    if (gradStop4) gradStop4.setAttribute('offset', pStr);
 }
 
 function startHold(e) {
     e.preventDefault();
     if (holdContainer) holdContainer.classList.add('holding');
     if (hintText) {
-        hintText.innerText = "กำลังปลดล็อก...";
-        hintText.style.color = "#ff007f";
+        hintText.innerText = "กำลังดำดิ่งสู่มหาสมุทรแห่งรัก...";
+        hintText.style.color = "#ff6fb0";
     }
 
     holdTimer = setInterval(() => {
         holdProgressVal += (updateInterval / holdDuration) * 100;
-        setProgress(holdProgressVal);
+        if (holdProgressVal > 100) holdProgressVal = 100;
+
+        setHeartFill(holdProgressVal);
 
         if (holdProgressVal >= 70 && envelopeCard) {
             envelopeCard.classList.add('urgent');
@@ -185,12 +178,12 @@ function endHold() {
     if (holdProgressVal < 100) {
         clearInterval(holdTimer);
         holdProgressVal = 0;
-        setProgress(0);
+        setHeartFill(0);
         if (holdContainer) holdContainer.classList.remove('holding');
         if (envelopeCard) envelopeCard.classList.remove('urgent');
         if (hintText) {
             hintText.innerText = "กดค้างไว้เพื่อเปิด ✨";
-            hintText.style.color = "#00f0ff";
+            hintText.style.color = "#35e6ff";
         }
     }
 }
@@ -199,7 +192,7 @@ function completeHold() {
     clearInterval(holdTimer);
     if (holdContainer) holdContainer.classList.remove('holding');
     if (envelopeCard) envelopeCard.classList.remove('urgent');
-    if (hintText) hintText.innerText = "สำเร็จ!";
+    if (hintText) hintText.innerText = "ดำดิ่งสู่โลกใต้น้ำแล้ว!";
 
     ytWantsToPlay = true;
     tryPlayMusic();
@@ -207,9 +200,9 @@ function completeHold() {
     setTimeout(() => {
         if (envelopeOverlay) envelopeOverlay.classList.add('hide');
         if (canvasContainer) canvasContainer.classList.add('show');
-        spawnAmbientHearts();
-        init3DScene();
-    }, 200);
+        spawnAmbientBubbles();
+        init3DOceanScene();
+    }, 250);
 }
 
 if (holdBtn) {
@@ -221,20 +214,20 @@ if (holdBtn) {
     holdBtn.addEventListener('touchcancel', endHold);
 }
 
-// ==================== ลูกเล่นเสริม: หัวใจลอยพื้นหลัง ====================
-function spawnAmbientHearts() {
+// ==================== ฟองอากาศลอยขึ้นใต้น้ำ ====================
+function spawnAmbientBubbles() {
     if (!canvasContainer || canvasContainer.querySelector('.ambient-hearts')) return;
     const wrap = document.createElement('div');
     wrap.className = 'ambient-hearts';
-    const glyphs = ['💗', '✨', '💕', '🌟'];
-    const count = 16;
+    const glyphs = ['🫧', '💖', '🫧', '✨'];
+    const count = 14;
     for (let i = 0; i < count; i++) {
         const span = document.createElement('span');
         span.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
         const left = Math.random() * 100;
-        const duration = 9 + Math.random() * 10;
+        const duration = 8 + Math.random() * 10;
         const delay = Math.random() * duration;
-        const size = 0.8 + Math.random() * 0.9;
+        const size = 0.8 + Math.random() * 0.8;
         span.style.left = left + '%';
         span.style.animationDuration = duration + 's';
         span.style.animationDelay = '-' + delay + 's';
@@ -244,13 +237,13 @@ function spawnAmbientHearts() {
     canvasContainer.appendChild(wrap);
 }
 
-// ==================== ลูกเล่นเสริม: ประกายตามเมาส์ ====================
+// ==================== ประกายใต้น้ำตามเมาส์ ====================
 let lastSparkTime = 0;
 function maybeSpawnSpark(x, y) {
     const now = Date.now();
     if (now - lastSparkTime < 90) return;
     lastSparkTime = now;
-    const glyphs = ['💗', '✨', '♥'];
+    const glyphs = ['🫧', '💖', '✨'];
     const el = document.createElement('span');
     el.className = 'cursor-spark';
     el.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
@@ -265,7 +258,7 @@ window.addEventListener('pointermove', (e) => {
     }
 }, { passive: true });
 
-// ==================== ลูกเล่นเสริม: ปุ่มกดมีคลื่นกระเพื่อม ====================
+// ==================== คลื่นกระเพื่อมปุ่มกด ====================
 function attachRipple(btn) {
     btn.addEventListener('pointerdown', (e) => {
         const rect = btn.getBoundingClientRect();
@@ -281,15 +274,15 @@ function attachRipple(btn) {
 }
 document.querySelectorAll('.btn-love, .close-btn').forEach(attachRipple);
 
-// ==================== ลูกเล่นเสริม: หัวใจระเบิดตอนเปิดผลลัพธ์ ====================
+// ==================== ระเบิดฟองอากาศหัวใจ ====================
 function spawnHeartBurst(anchorEl) {
     const wrap = document.createElement('div');
     wrap.className = 'heart-burst-wrap';
     const rect = anchorEl ? anchorEl.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
     wrap.style.left = (rect.left + rect.width / 2) + 'px';
     wrap.style.top = (rect.top + rect.height / 2) + 'px';
-    const glyphs = ['💖', '💗', '✨', '💕'];
-    const count = 14;
+    const glyphs = ['🫧', '💖', '💎', '✨'];
+    const count = 12;
     for (let i = 0; i < count; i++) {
         const span = document.createElement('span');
         span.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
@@ -316,8 +309,6 @@ const tarotModal = document.getElementById('tarotModal');
 const resultModal = document.getElementById('resultModal');
 const actionBtnGroup = document.querySelector('.action-btn-group');
 
-// เมื่อป๊อบอัพเปิดอยู่ ให้ฉาก 3D "หยุดคำนวณ" อนุภาคที่มองไม่เห็น (ยังหมุนกล้อง/กาแล็กซี่เบาๆ ได้)
-// เพื่อลดภาระ GPU ตอน backdrop-filter blur ทำงานหนักอยู่แล้ว
 let anyModalOpen = false;
 function refreshModalState() {
     anyModalOpen = !!(
@@ -395,265 +386,312 @@ if (closeResultBtn) {
     });
 }
 
-// ==================== ระบบเรนเดอร์ฉาก 3D (ปรับให้ลื่นขึ้น) ====================
-function init3DScene() {
-    // --- ตรวจสเปคเครื่องคร่าวๆ เพื่อปรับความละเอียดอนุภาคอัตโนมัติ ---
+// ==================== ระบบเรนเดอร์ 3D "GLOWING CORAL HEART REEF" ====================
+function init3DOceanScene() {
     const cores = navigator.hardwareConcurrency || 4;
     const isNarrow = window.innerWidth <= 768;
     const isLowPower = isNarrow || cores <= 4;
 
-    const heartParticlesCount = isLowPower ? 3200 : 6500;
-    const galaxyCount = isLowPower ? 4200 : 8500;
-    const starsCount = isLowPower ? 1200 : 2500;
+    const bubbleParticlesCount = isLowPower ? 2000 : 3800;
 
     const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020718, 0.022);
+
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 7, 20);
+    camera.position.set(0, 35, 30);
 
     const renderer = new THREE.WebGLRenderer({
         antialias: !isLowPower,
         alpha: true,
         powerPreference: 'high-performance'
     });
-    // จำกัด pixel ratio ไว้ที่ 2 (จอ retina/มือถือบางรุ่นสูงถึง 3-4 ซึ่งหนักเกินจำเป็น)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isLowPower ? 1.5 : 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     if (canvasContainer) canvasContainer.insertBefore(renderer.domElement, canvasContainer.firstChild);
 
-    const centerLight = new THREE.PointLight(0xff007f, 2, 50);
-    centerLight.position.set(0, 3, 0);
-    scene.add(centerLight);
+    // ระบบแสงสว่าง
+    const oceanLight1 = new THREE.PointLight(0xff3b9d, 0, 40);
+    oceanLight1.position.set(0, 4, 3);
+    scene.add(oceanLight1);
 
-    const starsGeometry = new THREE.BufferGeometry();
-    const starsPositions = new Float32Array(starsCount * 3);
-    for (let i = 0; i < starsCount * 3; i++) {
-        starsPositions[i] = (Math.random() - 0.5) * 140;
-    }
-    starsGeometry.setAttribute('position', new THREE.BufferAttribute(starsPositions, 3));
-    const starField = new THREE.Points(starsGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.5 }));
-    scene.add(starField);
+    const oceanLight2 = new THREE.PointLight(0x00f0ff, 0, 50);
+    oceanLight2.position.set(-8, 10, -4);
+    scene.add(oceanLight2);
 
-    const heartGeometry = new THREE.BufferGeometry();
-    const currentPositions = new Float32Array(heartParticlesCount * 3);
-    const targetPositions = new Float32Array(heartParticlesCount * 3);
-    const burstVelocities = new Float32Array(heartParticlesCount * 3);
+    const ambientLight = new THREE.AmbientLight(0x0d2247, 1.2);
+    scene.add(ambientLight);
 
-    for (let i = 0; i < heartParticlesCount; i++) {
+    // --- 1. ละอองฟองอากาศใต้น้ำ ---
+    const bubbleGeo = new THREE.BufferGeometry();
+    const bubblePos = new Float32Array(bubbleParticlesCount * 3);
+    const bubbleVel = new Float32Array(bubbleParticlesCount);
+    const bubbleColors = new Float32Array(bubbleParticlesCount * 3);
+
+    const colorCyan = new THREE.Color(0x35e6ff);
+    const colorPink = new THREE.Color(0xff6fb0);
+
+    for (let i = 0; i < bubbleParticlesCount; i++) {
         const idx = i * 3;
+        bubblePos[idx] = (Math.random() - 0.5) * 55;
+        bubblePos[idx + 1] = (Math.random() - 0.5) * 55;
+        bubblePos[idx + 2] = (Math.random() - 0.5) * 55;
 
-        const t = Math.random() * Math.PI * 2;
-        let x = 16 * Math.pow(Math.sin(t), 3);
-        let y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-        let z = (Math.random() - 0.5) * 5;
+        bubbleVel[i] = 0.018 + Math.random() * 0.035;
 
-        const scale = 0.35 + (Math.random() - 0.5) * 0.05;
-        targetPositions[idx] = x * scale;
-        targetPositions[idx + 1] = (y * scale) + 4.5;
-        targetPositions[idx + 2] = z * scale;
-
-        currentPositions[idx] = (Math.random() - 0.5) * 0.5;
-        currentPositions[idx + 1] = 2 + (Math.random() - 0.5) * 0.5;
-        currentPositions[idx + 2] = (Math.random() - 0.5) * 0.5;
-
-        const u = Math.random();
-        const v = Math.random();
-        const theta = u * 2.0 * Math.PI;
-        const phi = Math.acos(2.0 * v - 1.0);
-        const r = Math.cbrt(Math.random()) * 22;
-
-        burstVelocities[idx] = r * Math.sin(phi) * Math.cos(theta);
-        burstVelocities[idx + 1] = r * Math.sin(phi) * Math.sin(theta) + 2;
-        burstVelocities[idx + 2] = r * Math.cos(phi);
+        const mixedColor = colorCyan.clone().lerp(colorPink, Math.random());
+        bubbleColors[idx] = mixedColor.r;
+        bubbleColors[idx + 1] = mixedColor.g;
+        bubbleColors[idx + 2] = mixedColor.b;
     }
 
-    heartGeometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
-    heartGeometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
+    bubbleGeo.setAttribute('position', new THREE.BufferAttribute(bubblePos, 3));
+    bubbleGeo.setAttribute('color', new THREE.BufferAttribute(bubbleColors, 3));
+    bubbleGeo.attributes.position.setUsage(THREE.DynamicDrawUsage);
 
-    // ไล่สีอนุภาคหัวใจ: โทนชมพูเข้มด้านล่าง ไล่ไปขาวอมชมพูด้านบน เหมือนภาพต้นแบบ
-    let heartMinY = Infinity, heartMaxY = -Infinity;
-    for (let i = 0; i < heartParticlesCount; i++) {
-        const y = targetPositions[i * 3 + 1];
-        if (y < heartMinY) heartMinY = y;
-        if (y > heartMaxY) heartMaxY = y;
-    }
-    const heartRangeY = (heartMaxY - heartMinY) || 1;
-    const heartColors = new Float32Array(heartParticlesCount * 3);
-    const heartColorBase = new THREE.Color(0xff1f8a);
-    const heartColorTip = new THREE.Color(0xffeaf6);
-    for (let i = 0; i < heartParticlesCount; i++) {
-        const idx = i * 3;
-        const t = (targetPositions[idx + 1] - heartMinY) / heartRangeY;
-        const mixed = heartColorBase.clone().lerp(heartColorTip, Math.pow(Math.max(0, Math.min(1, t)), 1.3));
-        heartColors[idx] = mixed.r;
-        heartColors[idx + 1] = mixed.g;
-        heartColors[idx + 2] = mixed.b;
-    }
-    heartGeometry.setAttribute('color', new THREE.BufferAttribute(heartColors, 3));
-
-    const heartMaterial = new THREE.PointsMaterial({
-        size: 0.2,
+    const bubbleMat = new THREE.PointsMaterial({
+        size: 0.16,
         vertexColors: true,
         transparent: true,
-        opacity: 0.95,
+        opacity: 0,
         blending: THREE.AdditiveBlending
     });
-    const heartParticles = new THREE.Points(heartGeometry, heartMaterial);
-    scene.add(heartParticles);
+    const bubbleParticles = new THREE.Points(bubbleGeo, bubbleMat);
+    scene.add(bubbleParticles);
 
-    const galaxyGeometry = new THREE.BufferGeometry();
-    const galaxyPositions = new Float32Array(galaxyCount * 3);
-    const galaxyColors = new Float32Array(galaxyCount * 3);
-    const color1 = new THREE.Color(0xff007f);
-    const color2 = new THREE.Color(0x00f0ff);
+    // --- 2. สร้างโครงแนวปะการังคริสตัลทรงหัวใจ 3D (Glowing Coral Heart Reef) ---
+    const coralHeartGroup = new THREE.Group();
+    coralHeartGroup.position.set(0, 3.2, 0);
 
-    for (let i = 0; i < galaxyCount; i++) {
-        const r = Math.random() * 14 + 1.2;
-        const spinAngle = r * 1.3;
-        const branchAngle = ((i % 3) * 2 * Math.PI) / 3;
-
-        galaxyPositions[i * 3] = Math.cos(branchAngle + spinAngle) * r + (Math.random() - 0.5) * 1.5;
-        galaxyPositions[i * 3 + 1] = (Math.random() - 0.5) * 0.8 - 1.8;
-        galaxyPositions[i * 3 + 2] = Math.sin(branchAngle + spinAngle) * r + (Math.random() - 0.5) * 1.5;
-
-        const mixedColor = color1.clone().lerp(color2, r / 14);
-        galaxyColors[i * 3] = mixedColor.r;
-        galaxyColors[i * 3 + 1] = mixedColor.g;
-        galaxyColors[i * 3 + 2] = mixedColor.b;
+    const coralNodes = [];
+    const nodeCount = isLowPower ? 60 : 100;
+    
+    // สร้างเส้นทางสมูทรูปทรงหัวใจ 3D
+    const heartCurvePoints = [];
+    for (let i = 0; i <= 60; i++) {
+        const t = (i / 60) * Math.PI * 2;
+        let x = 16 * Math.pow(Math.sin(t), 3);
+        let y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+        let z = Math.sin(t * 2) * 1.5; // เพิ่มมิติส่วนหนา 3D
+        
+        const scale = 0.38;
+        heartCurvePoints.push(new THREE.Vector3(x * scale, y * scale, z));
     }
+    const heartPath = new THREE.CatmullRomCurve3(heartCurvePoints, true);
 
-    galaxyGeometry.setAttribute('position', new THREE.BufferAttribute(galaxyPositions, 3));
-    galaxyGeometry.setAttribute('color', new THREE.BufferAttribute(galaxyColors, 3));
-    const galaxyParticles = new THREE.Points(galaxyGeometry, new THREE.PointsMaterial({
-        size: 0.1,
-        vertexColors: true,
+    // ท่อกิ่งปะการังคริสตัลหลักทรงหัวใจ
+    const coralTubeGeo = new THREE.TubeGeometry(heartPath, 80, 0.42, 12, true);
+    const coralTubeMat = new THREE.MeshPhongMaterial({
+        color: 0xff3b9d,
+        emissive: 0x801048,
+        specular: 0x35e6ff,
+        shininess: 80,
         transparent: true,
-        opacity: 0.8,
-        blending: THREE.AdditiveBlending
-    }));
-    scene.add(galaxyParticles);
+        opacity: 0.85
+    });
+    const coralTubeMesh = new THREE.Mesh(coralTubeGeo, coralTubeMat);
+    coralHeartGroup.add(coralTubeMesh);
 
-    // --- ดาวเคราะห์เรืองแสงพร้อมวงแหวน ตรงกลางกาแล็กซี่ (เหมือนภาพต้นแบบ) ---
-    function createPlanet() {
+    // กิ่งก้านและพุ่มดอกไม้ทะเลเรืองแสง (Anemone Clusters) บนปะการัง
+    for (let i = 0; i < nodeCount; i++) {
+        const u = i / nodeCount;
+        const pos = heartPath.getPointAt(u);
+        const tangent = heartPath.getTangentAt(u);
+
+        // ดอกไม้ทะเลคริสตัลเรืองแสง
+        const anemoneGeo = new THREE.DodecahedronGeometry(0.22 + Math.random() * 0.25, 1);
+        const anemoneMat = new THREE.MeshBasicMaterial({
+            color: Math.random() > 0.4 ? 0xffa3e0 : 0x80f5ff,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        const anemone = new THREE.Mesh(anemoneGeo, anemoneMat);
+        anemone.position.copy(pos).add(new THREE.Vector3((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5));
+        coralHeartGroup.add(anemone);
+        coralNodes.push({ mesh: anemone, baseScale: anemone.scale.x, phase: Math.random() * Math.PI * 2 });
+    }
+    
+    // ออร่าแสงหัวใจตรงกลาง
+    const centerGlowGeo = new THREE.SphereGeometry(2.5, 24, 24);
+    const centerGlowMat = new THREE.MeshBasicMaterial({
+        color: 0xff6fb0,
+        transparent: true,
+        opacity: 0.25,
+        blending: THREE.AdditiveBlending
+    });
+    const centerGlow = new THREE.Mesh(centerGlowGeo, centerGlowMat);
+    coralHeartGroup.add(centerGlow);
+
+    scene.add(coralHeartGroup);
+
+    // --- 3. แมงกะพรุนเนื้อแก้วสามมิติเสมือนจริง ---
+    function createCinematicJellyfish(pinkTone = true) {
         const group = new THREE.Group();
 
-        const bodyCanvas = document.createElement('canvas');
-        bodyCanvas.width = 256; bodyCanvas.height = 256;
-        const bctx = bodyCanvas.getContext('2d');
-        const bodyGrad = bctx.createRadialGradient(96, 88, 8, 128, 128, 150);
-        bodyGrad.addColorStop(0, '#fff3fb');
-        bodyGrad.addColorStop(0.45, '#ff9fd9');
-        bodyGrad.addColorStop(1, '#7a1258');
-        bctx.fillStyle = bodyGrad;
-        bctx.fillRect(0, 0, 256, 256);
-        const bodyTexture = new THREE.CanvasTexture(bodyCanvas);
+        const points = [];
+        for (let i = 0; i <= 24; i++) {
+            const t = i / 24;
+            const x = Math.sin(t * Math.PI * 0.58) * 1.6;
+            const y = Math.cos(t * Math.PI * 0.58) * 1.3;
+            points.push(new THREE.Vector2(x, y));
+        }
 
-        const bodyGeo = new THREE.SphereGeometry(1.5, 32, 32);
-        const bodyMat = new THREE.MeshBasicMaterial({ map: bodyTexture });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        group.add(body);
-
-        const ringGeo = new THREE.RingGeometry(2.1, 3.6, 64);
-        const ringMat = new THREE.MeshBasicMaterial({
-            color: 0xffb3e6,
+        const capGeo = new THREE.LatheGeometry(points, 32);
+        const capMat = new THREE.MeshPhongMaterial({
+            color: pinkTone ? 0xff4da6 : 0x00f0ff,
+            emissive: pinkTone ? 0x801048 : 0x005577,
+            specular: 0xffffff,
+            shininess: 90,
             transparent: true,
-            opacity: 0.35,
+            opacity: 0.45,
             side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
+            blending: THREE.NormalBlending
         });
-        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-        ringMesh.rotation.x = Math.PI / 2 - 0.32;
-        group.add(ringMesh);
+        const capMesh = new THREE.Mesh(capGeo, capMat);
+        group.add(capMesh);
 
-        const glowLight = new THREE.PointLight(0xff8fd0, 3, 18);
-        group.add(glowLight);
+        const rimGeo = new THREE.TorusGeometry(1.58, 0.05, 12, 32);
+        const rimMat = new THREE.MeshBasicMaterial({
+            color: pinkTone ? 0xffa3e0 : 0x99f7ff,
+            transparent: true,
+            opacity: 0.7,
+            blending: THREE.AdditiveBlending
+        });
+        const rimMesh = new THREE.Mesh(rimGeo, rimMat);
+        rimMesh.rotation.x = Math.PI / 2;
+        rimMesh.position.y = -0.1;
+        group.add(rimMesh);
 
-        group.position.set(0, -1.8, 0);
-        return group;
+        const organGeo = new THREE.SphereGeometry(0.55, 20, 20);
+        const organMat = new THREE.MeshBasicMaterial({
+            color: pinkTone ? 0xffcce6 : 0xd4f8ff,
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending
+        });
+        const organCore = new THREE.Mesh(organGeo, organMat);
+        organCore.position.y = 0.5;
+        group.add(organCore);
+
+        const armGroup = new THREE.Group();
+        const armCount = 4;
+        const arms = [];
+
+        for (let i = 0; i < armCount; i++) {
+            const armPoints = [];
+            const angle = (i / armCount) * Math.PI * 2;
+            for (let j = 0; j < 12; j++) {
+                const h = -(j * 0.32);
+                const r = 0.3 + Math.sin(j * 0.7) * 0.15;
+                armPoints.push(new THREE.Vector3(Math.cos(angle) * r, h, Math.sin(angle) * r));
+            }
+            const armGeo = new THREE.BufferGeometry().setFromPoints(armPoints);
+            const armMat = new THREE.LineBasicMaterial({
+                color: pinkTone ? 0xff75c3 : 0x33ebff,
+                transparent: true,
+                opacity: 0.75,
+                blending: THREE.AdditiveBlending
+            });
+            const armLine = new THREE.Line(armGeo, armMat);
+            armGroup.add(armLine);
+            arms.push({ line: armLine, points: armPoints, angleOffset: angle });
+        }
+        group.add(armGroup);
+
+        const tentacleCount = 14;
+        const tentacles = [];
+        for (let i = 0; i < tentacleCount; i++) {
+            const tPoints = [];
+            const angle = (i / tentacleCount) * Math.PI * 2;
+            const radius = 1.5;
+            const startX = Math.cos(angle) * radius;
+            const startZ = Math.sin(angle) * radius;
+
+            for (let j = 0; j < 14; j++) {
+                tPoints.push(new THREE.Vector3(startX, -(j * 0.38), startZ));
+            }
+
+            const lineGeo = new THREE.BufferGeometry().setFromPoints(tPoints);
+            const lineMat = new THREE.LineBasicMaterial({
+                color: pinkTone ? 0xffb0e1 : 0x80f5ff,
+                transparent: true,
+                opacity: 0.5,
+                blending: THREE.AdditiveBlending
+            });
+            const tentacleLine = new THREE.Line(lineGeo, lineMat);
+            group.add(tentacleLine);
+            tentacles.push({ line: tentacleLine, points: tPoints, angleOffset: angle });
+        }
+
+        return {
+            group,
+            capMesh,
+            rimMesh,
+            organCore,
+            arms,
+            tentacles,
+            basePosY: 0,
+            speed: 0.6 + Math.random() * 0.3
+        };
     }
-    const planet = createPlanet();
-    scene.add(planet);
 
+    const jellyfishList = [];
+    const jellyfishPosList = [
+        { x: -6.5, y: 3.5, z: -1, pink: true },
+        { x: 6.5, y: 4.5, z: -1, pink: false },
+        { x: -8, y: -2, z: 2, pink: false },
+        { x: 7.5, y: -1, z: 1.5, pink: true },
+        { x: 0, y: 8, z: -5, pink: true }
+    ];
+
+    jellyfishPosList.forEach((info) => {
+        const jf = createCinematicJellyfish(info.pink);
+        jf.group.position.set(info.x, info.y, info.z);
+        jf.basePosY = info.y;
+        jf.group.scale.set(0, 0, 0);
+        scene.add(jf.group);
+        jellyfishList.push(jf);
+    });
+
+    // --- 4. วงแหวนตัวอักษรบอกรักใต้น้ำ ---
     const ringGroup = new THREE.Group();
     scene.add(ringGroup);
 
-    function createCatTexture() {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 256; canvas.height = 256;
-
-        ctx.fillStyle = 'rgba(255, 0, 127, 0.4)';
-        ctx.beginPath(); ctx.arc(128, 128, 100, 0, Math.PI * 2); ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(128, 135, 65, 0, Math.PI * 2); ctx.fill();
-
-        ctx.beginPath(); ctx.moveTo(70, 95); ctx.lineTo(85, 45); ctx.lineTo(110, 80); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(186, 95); ctx.lineTo(171, 45); ctx.lineTo(146, 80); ctx.fill();
-
-        ctx.fillStyle = '#ff758f';
-        ctx.beginPath(); ctx.moveTo(76, 90); ctx.lineTo(86, 55); ctx.lineTo(104, 80); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(180, 90); ctx.lineTo(170, 55); ctx.lineTo(152, 80); ctx.fill();
-
-        ctx.strokeStyle = '#333333'; ctx.lineWidth = 5;
-        ctx.beginPath(); ctx.arc(100, 130, 12, 0.2, Math.PI - 0.2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(156, 130, 12, 0.2, Math.PI - 0.2); ctx.stroke();
-
-        ctx.fillStyle = '#ff8fa3';
-        ctx.beginPath(); ctx.arc(85, 145, 12, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(171, 145, 12, 0, Math.PI * 2); ctx.fill();
-
-        return new THREE.CanvasTexture(canvas);
-    }
-
-    // แมวลอยอยู่สูงขึ้น ใกล้ฐานหัวใจ แทนที่จะอยู่ระดับวงแหวนล่างสุด
-    const catTexture = createCatTexture();
-    const catCount = 3;
-    for (let i = 0; i < catCount; i++) {
-        const spriteMat = new THREE.SpriteMaterial({ map: catTexture, transparent: true });
-        const catSprite = new THREE.Sprite(spriteMat);
-        const angle = (i / catCount) * Math.PI * 2 + 0.5;
-        catSprite.position.set(Math.cos(angle) * 7.5, 0.8, Math.sin(angle) * 7.5);
-        catSprite.scale.set(1.7, 1.7, 1);
-        ringGroup.add(catSprite);
-    }
-
-    // ป้ายข้อความหลากหลายรอบวง เหมือนภาพต้นแบบ (แทนคำเดิม "LOVE U" ซ้ำ)
     const labels = [
-        "FOREVER", "ALWAYS U", "ANNIVERSARY", "ONLY U",
-        "MY HEART", "LOVE U THE MOST", "OUR LOVE",
-        "HAPPY ANNIVERSARY", "LOVE U"
+        "OCEAN OF LOVE", "FOREVER WITH U", "DEEP IN LOVE",
+        "MY CRYSTAL HEART", "ANNIVERSARY", "LOVE U THE MOST",
+        "MY SWEET DREAMS", "ALWAYS & FOREVER"
     ];
     labels.forEach((text, index) => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = 512; canvas.height = 128;
-        ctx.font = 'Bold 30px Prompt, sans-serif';
+        ctx.font = 'Bold 28px Prompt, sans-serif';
         ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = '#ff007f';
-        ctx.shadowBlur = 16;
+        ctx.shadowColor = '#35e6ff';
+        ctx.shadowBlur = 14;
         ctx.textAlign = 'center';
         ctx.fillText(text, 256, 70);
 
-        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity: 0 }));
         const angle = (index / labels.length) * Math.PI * 2;
-        sprite.position.set(Math.cos(angle) * 10.5, -0.8, Math.sin(angle) * 10.5);
-        sprite.scale.set(4.4, 1.1, 1);
+        sprite.position.set(Math.cos(angle) * 10, -1, Math.sin(angle) * 10);
+        sprite.scale.set(4, 1, 1);
         ringGroup.add(sprite);
     });
 
-    // --- พลุ: จำกัดจำนวนพลุพร้อมกันสูงสุด กันสแปมคลิกจนหนักเครื่อง ---
+    // --- 5. ฟองอากาศระเบิดใต้น้ำ ---
     const fireworks = [];
     const MAX_FIREWORKS = isLowPower ? 4 : 8;
     let lastFireworkTime = 0;
 
     function createFirework(x, y) {
         const now = performance.now();
-        if (now - lastFireworkTime < 60) return; // กันสแปมเร็วเกินไป
+        if (now - lastFireworkTime < 60) return;
         if (fireworks.length >= MAX_FIREWORKS) return;
         lastFireworkTime = now;
 
-        const pCount = isLowPower ? 45 : 80;
+        const pCount = isLowPower ? 35 : 65;
         const pGeo = new THREE.BufferGeometry();
         const pPos = new Float32Array(pCount * 3);
         const pVelo = [];
@@ -667,14 +705,14 @@ function init3DScene() {
             pPos[i * 3] = pos.x; pPos[i * 3 + 1] = pos.y; pPos[i * 3 + 2] = pos.z;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.random() * Math.PI;
-            const speed = 0.15 + Math.random() * 0.15;
-            pVelo.push({ x: Math.sin(phi) * Math.cos(theta) * speed, y: Math.sin(phi) * Math.sin(theta) * speed, z: Math.cos(phi) * speed });
+            const speed = 0.1 + Math.random() * 0.1;
+            pVelo.push({ x: Math.sin(phi) * Math.cos(theta) * speed, y: Math.sin(phi) * Math.sin(theta) * speed + 0.02, z: Math.cos(phi) * speed });
         }
 
         pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
         pGeo.attributes.position.setUsage(THREE.DynamicDrawUsage);
         const firework = new THREE.Points(pGeo, new THREE.PointsMaterial({
-            color: Math.random() > 0.5 ? 0x00f0ff : 0xff007f,
+            color: Math.random() > 0.5 ? 0x35e6ff : 0xff6fb0,
             size: 0.22,
             transparent: true,
             opacity: 1,
@@ -697,48 +735,118 @@ function init3DScene() {
     }, { passive: true });
 
     const clock = new THREE.Clock();
-    // อ้างอิงต่อ 60fps เป็นฐาน เพื่อให้ lerp/rotation คงที่ไม่ว่าเฟรมเรตจริงจะเป็นเท่าไร
     const REFERENCE_FPS = 60;
-
     let rafId = null;
     let isRunning = true;
+
+    const introOverlayText = document.getElementById('introOverlayText');
+    if (introOverlayText) introOverlayText.classList.add('show');
 
     function animate() {
         if (!isRunning) return;
         rafId = requestAnimationFrame(animate);
 
         const rawDelta = clock.getDelta();
-        // กันเฟรมกระโดดตอนสลับแท็บกลับมา (คลิปไว้ไม่เกิน ~3 เฟรม)
         const delta = Math.min(rawDelta, 3 / REFERENCE_FPS);
-        const frameScale = delta * REFERENCE_FPS; // 1.0 ที่ 60fps พอดี
-
+        const frameScale = delta * REFERENCE_FPS;
         const elapsedTime = clock.elapsedTime;
-        const positions = heartGeometry.attributes.position.array;
 
-        if (elapsedTime < 1.8) {
-            const burstSpeed = 1 - Math.pow(1 - 0.08, frameScale);
-            centerLight.intensity = 10;
-            for (let i = 0; i < heartParticlesCount; i++) {
-                const idx = i * 3;
-                positions[idx] += (burstVelocities[idx] - positions[idx]) * burstSpeed;
-                positions[idx + 1] += (burstVelocities[idx + 1] - positions[idx + 1]) * burstSpeed;
-                positions[idx + 2] += (burstVelocities[idx + 2] - positions[idx + 2]) * burstSpeed;
+        if (elapsedTime < 3.0) {
+            const diveProgress = elapsedTime / 3.0;
+            const easeDive = 1 - Math.pow(1 - diveProgress, 3);
+
+            camera.position.y = 35 - (35 - 3.5) * easeDive;
+            camera.position.z = 30 - (30 - 20) * easeDive;
+
+            oceanLight1.intensity = easeDive * 3.5;
+            oceanLight2.intensity = easeDive * 2.8;
+            ambientLight.intensity = 0.5 + easeDive * 1.0;
+
+            bubbleMat.opacity = easeDive * 0.7;
+            coralHeartGroup.scale.set(easeDive, easeDive, easeDive);
+
+            jellyfishList.forEach((jf) => {
+                const s = easeDive;
+                jf.group.scale.set(s, s, s);
+            });
+
+            ringGroup.children.forEach(sprite => {
+                sprite.material.opacity = easeDive * 0.85;
+            });
+
+            if (elapsedTime > 2.0 && introOverlayText) {
+                introOverlayText.classList.remove('show');
             }
         } else {
-            const formSpeed = 1 - Math.pow(1 - 0.035, frameScale);
-            centerLight.intensity = 4 + Math.sin(elapsedTime * 3) * 2;
-            for (let i = 0; i < heartParticlesCount; i++) {
-                const idx = i * 3;
-                positions[idx] += (targetPositions[idx] - positions[idx]) * formSpeed;
-                positions[idx + 1] += (targetPositions[idx + 1] - positions[idx + 1]) * formSpeed;
-                positions[idx + 2] += (targetPositions[idx + 2] - positions[idx + 2]) * formSpeed;
+            if (actionBtnGroup && !actionBtnGroup.classList.contains('ready')) {
+                actionBtnGroup.classList.add('ready');
             }
-            const pulse = 1 + Math.sin(elapsedTime * 3) * 0.05;
-            heartParticles.scale.set(pulse, pulse, pulse);
+
+            // จังหวะการหายใจและกระเพื่อมของปะการังหัวใจ 3D
+            const coralPulse = 1 + Math.sin(elapsedTime * 2.2) * 0.04;
+            coralHeartGroup.scale.set(coralPulse, coralPulse, coralPulse);
+            coralHeartGroup.rotation.y += 0.002 * frameScale;
+
+            coralNodes.forEach((node) => {
+                const s = node.baseScale * (1 + Math.sin(elapsedTime * 3 + node.phase) * 0.2);
+                node.mesh.scale.set(s, s, s);
+            });
+
+            targetX += (mouseX - targetX) * Math.min(0.04 * frameScale, 1);
+            targetY += (mouseY - targetY) * Math.min(0.04 * frameScale, 1);
+            camera.position.x = Math.sin(targetX) * 20;
+            camera.position.z = Math.cos(targetX) * 20;
+            camera.position.y = 3.5 + targetY * 5;
         }
 
-        heartGeometry.attributes.position.needsUpdate = true;
+        // อัปเดตฟองอากาศ
+        const bArray = bubbleParticles.geometry.attributes.position.array;
+        for (let i = 0; i < bubbleParticlesCount; i++) {
+            const idx = i * 3;
+            bArray[idx + 1] += bubbleVel[i] * frameScale;
+            bArray[idx] += Math.sin(elapsedTime * 2 + i) * 0.012 * frameScale;
 
+            if (bArray[idx + 1] > 22) {
+                bArray[idx + 1] = -20;
+                bArray[idx] = (Math.random() - 0.5) * 50;
+            }
+        }
+        bubbleParticles.geometry.attributes.position.needsUpdate = true;
+
+        // อัปเดตแมงกะพรุน
+        jellyfishList.forEach((jf, index) => {
+            const swimCycle = Math.sin(elapsedTime * jf.speed * 1.8 + index * 1.5);
+            jf.group.position.y = jf.basePosY + swimCycle * 1.1;
+
+            const squeezeX = 1 + swimCycle * 0.16;
+            const squeezeY = 1 - swimCycle * 0.14;
+            jf.capMesh.scale.set(squeezeX, squeezeY, squeezeX);
+            jf.rimMesh.scale.set(squeezeX, squeezeX, squeezeX);
+
+            jf.organCore.rotation.y += 0.015 * frameScale;
+
+            jf.arms.forEach((arm) => {
+                const pos = arm.line.geometry.attributes.position.array;
+                for (let k = 1; k < 12; k++) {
+                    const wave = Math.sin(elapsedTime * 2.8 - k * 0.35 + arm.angleOffset) * 0.09;
+                    pos[k * 3] = arm.points[k].x + wave;
+                    pos[k * 3 + 2] = arm.points[k].z + wave;
+                }
+                arm.line.geometry.attributes.position.needsUpdate = true;
+            });
+
+            jf.tentacles.forEach((tent) => {
+                const pos = tent.line.geometry.attributes.position.array;
+                for (let k = 1; k < 14; k++) {
+                    const wave = Math.sin(elapsedTime * 2.2 - k * 0.3 + tent.angleOffset) * (0.04 + k * 0.016);
+                    pos[k * 3] = tent.points[k].x + wave;
+                    pos[k * 3 + 2] = tent.points[k].z + wave;
+                }
+                tent.line.geometry.attributes.position.needsUpdate = true;
+            });
+        });
+
+        // อัปเดตฟองอากาศระเบิด
         for (let i = fireworks.length - 1; i >= 0; i--) {
             const fw = fireworks[i];
             const fwPos = fw.mesh.geometry.attributes.position.array;
@@ -758,24 +866,14 @@ function init3DScene() {
             }
         }
 
-        heartParticles.rotation.y += 0.004 * frameScale;
-        galaxyParticles.rotation.y += 0.002 * frameScale;
-        ringGroup.rotation.y += 0.0025 * frameScale;
-        planet.rotation.y += 0.006 * frameScale;
-
-        targetX += (mouseX - targetX) * Math.min(0.05 * frameScale, 1);
-        targetY += (mouseY - targetY) * Math.min(0.05 * frameScale, 1);
-        camera.position.x = Math.sin(targetX) * 20;
-        camera.position.z = Math.cos(targetX) * 20;
-        camera.position.y = 7 + targetY * 8;
-        camera.lookAt(0, 2, 0);
+        ringGroup.rotation.y += 0.002 * frameScale;
+        camera.lookAt(0, 1.8, 0);
 
         renderer.render(scene, camera);
     }
 
     animate();
 
-    // หยุดเรนเดอร์ตอนสลับแท็บ/มินิไมซ์ เพื่อไม่ให้กินแบตและ CPU/GPU เปล่าๆ
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             isRunning = false;
@@ -783,7 +881,7 @@ function init3DScene() {
         } else {
             if (!isRunning) {
                 isRunning = true;
-                clock.getDelta(); // เคลียร์เวลาที่ค้างไว้ตอนซ่อนอยู่ ไม่ให้กระโดด
+                clock.getDelta();
                 animate();
             }
         }
