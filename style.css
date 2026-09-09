@@ -15,6 +15,7 @@
     --surface: rgba(6, 22, 48, 0.92);
     --surface-border: rgba(53, 230, 255, 0.45);
 
+    /* Refined, layered elevation shadows */
     --shadow-ambient: 0 2px 6px rgba(0, 0, 0, 0.35);
     --shadow-lift: 0 20px 50px rgba(0, 4, 16, 0.55);
     --shadow-glow-cyan: 0 0 1px rgba(53, 230, 255, 0.6), 0 0 26px rgba(53, 230, 255, 0.22);
@@ -139,9 +140,9 @@ button:focus-visible,
     max-width: 400px;
     text-align: center;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-        inset 0 0 30px rgba(53, 230, 255, 0.15),
-        0 0 25px rgba(53, 230, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        inset 0 0 26px rgba(53, 230, 255, 0.08),
+        var(--shadow-glow-cyan),
         var(--shadow-lift);
     display: flex;
     flex-direction: column;
@@ -255,18 +256,11 @@ button:focus-visible,
 
 .click-hint {
     color: var(--cyan);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 300;
-    letter-spacing: 0.5px;
     text-shadow: 0 0 8px rgba(53, 230, 255, 0.6);
-    margin-top: -10px;
-    transition: color 0.3s ease, transform 0.3s ease;
-    animation: float-hint 2s ease-in-out infinite alternate;
-}
-
-@keyframes float-hint {
-    from { transform: translateY(0); opacity: 0.8; }
-    to { transform: translateY(-4px); opacity: 1; }
+    z-index: 2;
+    transition: color 0.3s ease;
 }
 
 /* ==================== หน้า 2: 3D Ocean + เมนู ==================== */
@@ -310,11 +304,6 @@ button:focus-visible,
     pointer-events: auto;
 }
 
-.action-btn-group.ready {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
-
 .btn-love {
     background: linear-gradient(180deg, rgba(15, 42, 84, 0.95), rgba(6, 20, 45, 0.95));
     color: #eaf9ff;
@@ -341,6 +330,7 @@ button:focus-visible,
     transform: translateY(0) scale(0.98);
 }
 
+/* ==================== ป๊อบอัพการ์ด (พื้นฐานร่วม) ==================== */
 /* ==================== ป๊อบอัพการ์ด (พื้นฐานร่วม) ==================== */
 .card {
     position: fixed;
@@ -383,7 +373,6 @@ button:focus-visible,
     pointer-events: auto !important;
     transform: translate(-50%, -50%) scale(1) !important;
 }
-
 /* ==================== การ์ดวันครบรอบ ==================== */
 .cat-avatar-frame {
     width: 90px;
@@ -793,7 +782,7 @@ button:focus-visible,
     transform: scale(1.08);
     box-shadow: 0 0 2px rgba(53, 230, 255, 0.8), 0 0 24px rgba(53, 230, 255, 0.55);
 }
-
+/* ==================== แอนิเมชันข้อความเปิดตัวใต้น้ำ ==================== */
 .intro-overlay-text {
     position: fixed;
     top: 38%;
@@ -829,4 +818,36 @@ button:focus-visible,
     display: block;
     letter-spacing: 0.3px;
     text-shadow: 0 0 12px rgba(255, 47, 143, 0.6);
+}
+
+/* แสดงปุ่มหลังจากอินโทรจบแล้ว */
+.action-btn-group.ready {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* ข้อความบอกให้กดค้าง */
+.click-hint {
+    color: var(--cyan);
+    font-size: 0.9rem;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 8px rgba(53, 230, 255, 0.6);
+    margin-top: -10px;
+    transition: color 0.3s ease, transform 0.3s ease;
+    animation: float-hint 2s ease-in-out infinite alternate;
+}
+
+@keyframes float-hint {
+    from { transform: translateY(0); opacity: 0.8; }
+    to { transform: translateY(-4px); opacity: 1; }
+}
+
+/* เอฟเฟกต์ซองเรืองแสงมากขึ้น */
+.envelope {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 0 30px rgba(53, 230, 255, 0.15),
+        0 0 25px rgba(53, 230, 255, 0.3),
+        var(--shadow-lift);
 }

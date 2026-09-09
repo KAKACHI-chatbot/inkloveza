@@ -1,5 +1,5 @@
-// 📸 ลิงก์รูปภาพคู่ของคุณ
-const PHOTO_URL = './couple.jpg';
+// 📸 ลิงก์รูปภาพคู่ของคุณ (นำรูปคู่ไปวางไว้ในโฟลเดอร์เดียวกับ script.js แล้วตั้งชื่อว่า couple.jpg)
+const PHOTO_URL = 'couple.jpg';
 
 const startDate = new Date(2025, 7, 15, 0, 0, 0);
 
@@ -512,44 +512,41 @@ function init3DOceanScene() {
     
     // --- 📸 โหลดและแสดงผลรูปคู่ 3D ทรงกลมตรงกลางปะการัง (Couple Photo Portal) ---
     const textureLoader = new THREE.TextureLoader();
-    textureLoader.crossOrigin = 'anonymous';
     let photoMesh = null;
 
-    textureLoader.load(
-        PHOTO_URL, 
-        (texture) => {
-            texture.colorSpace = THREE.SRGBColorSpace;
-            texture.generateMipmaps = true;
-            texture.minFilter = THREE.LinearMipmapLinearFilter;
+    textureLoader.load(PHOTO_URL, (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
 
-            const photoGeo = new THREE.CircleGeometry(2.3, 32);
-            const photoMat = new THREE.MeshBasicMaterial({
-                map: texture,
-                side: THREE.DoubleSide,
-                transparent: true,
-                opacity: 0.95
-            });
-            photoMesh = new THREE.Mesh(photoGeo, photoMat);
-            photoMesh.position.set(0, 0.2, 0);
-            coralHeartGroup.add(photoMesh);
+        const photoGeo = new THREE.CircleGeometry(2.3, 32);
+        const photoMat = new THREE.MeshBasicMaterial({
+            map: texture,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.95
+        });
+        photoMesh = new THREE.Mesh(photoGeo, photoMat);
+        photoMesh.position.set(0, 0.2, 0);
+        photoMesh.renderOrder = 10; // วาดรูปทีหลังสุด กันไม่ให้ปะการัง/แสงอื่นบังตอนกล้องหมุน
+        coralHeartGroup.add(photoMesh);
 
-            const ringGlowGeo = new THREE.RingGeometry(2.32, 2.55, 32);
-            const ringGlowMat = new THREE.MeshBasicMaterial({
-                color: 0x35e6ff,
-                side: THREE.DoubleSide,
-                transparent: true,
-                opacity: 0.85,
-                blending: THREE.AdditiveBlending
-            });
-            const ringGlow = new THREE.Mesh(ringGlowGeo, ringGlowMat);
-            ringGlow.position.set(0, 0.2, 0.01);
-            coralHeartGroup.add(ringGlow);
-        },
-        undefined,
-        (err) => {
-            console.error('Error loading photo texture:', err);
-        }
-    );
+        const ringGlowGeo = new THREE.RingGeometry(2.32, 2.55, 32);
+        const ringGlowMat = new THREE.MeshBasicMaterial({
+            color: 0x35e6ff,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        const ringGlow = new THREE.Mesh(ringGlowGeo, ringGlowMat);
+        ringGlow.position.set(0, 0.2, 0.01);
+        ringGlow.renderOrder = 11; // วงแหวนเรืองแสงวาดทับรูปได้ แต่ไม่บังทั้งใบ
+        coralHeartGroup.add(ringGlow);
+    }, undefined, (err) => {
+        console.error('โหลดรูป couple.jpg ไม่สำเร็จ:', err);
+    });
 
     const centerGlowGeo = new THREE.SphereGeometry(2.8, 24, 24);
     const centerGlowMat = new THREE.MeshBasicMaterial({
@@ -696,6 +693,7 @@ function init3DOceanScene() {
     const heartParticlesGroup = new THREE.Group();
     scene.add(heartParticlesGroup);
 
+    // สร้าง Texture รูปหัวใจด้วย Canvas 2D
     function createHeartTexture() {
         const canvas = document.createElement('canvas');
         canvas.width = 64;
@@ -888,10 +886,10 @@ function init3DOceanScene() {
                 node.mesh.scale.set(s, s, s);
             });
 
-            // ปิดการหันตามกล้องเพื่อป้องกันรูปหายเวลาเลื่อนเมาส์
-            // if (photoMesh) {
-            //     photoMesh.lookAt(camera.position);
-            // }
+            // หมุนแผ่นรูปภาพให้หันหน้าเข้าหากล้องตลอดเวลา
+            if (photoMesh) {
+                photoMesh.lookAt(camera.position);
+            }
 
             targetX += (mouseX - targetX) * Math.min(0.04 * frameScale, 1);
             targetY += (mouseY - targetY) * Math.min(0.04 * frameScale, 1);
@@ -914,7 +912,7 @@ function init3DOceanScene() {
         }
         bubbleParticles.geometry.attributes.position.needsUpdate = true;
 
-        // อัปเดตละอองหัวใจ
+        // อัปเดตการลอยวนของละอองหัวใจและดาววิ้งๆ
         magicHearts.forEach((item) => {
             item.angle += item.speed * frameScale;
             const currentRadius = item.radius + Math.sin(elapsedTime * 1.2 + item.pulsePhase) * 0.5;
