@@ -35,6 +35,103 @@ function updateCounter() {
 setInterval(updateCounter, 1000);
 updateCounter();
 
+// ==================== เพลงพื้นหลังจาก YouTube ====================
+// วิธีใส่เพลง: เอา Video ID จากลิงก์ YouTube มาใส่ตรงนี้
+// เช่น https://www.youtube.com/watch?v=dQw4w9WgXcQ  -> ID คือ "dQw4w9WgXcQ"
+// หรือ https://youtu.be/dQw4w9WgXcQ                  -> ID คือ "dQw4w9WgXcQ" เช่นกัน
+const YT_VIDEO_ID = "LXIEBWnqiBA";
+
+let ytPlayer = null;
+let ytIsReady = false;
+let ytWantsToPlay = false; // true เมื่อผู้ใช้ปลดล็อกซองแล้ว (ถือว่ามี user gesture)
+let ytMuted = false;
+
+function extractYouTubeId(url) {
+    if (!url) return null;
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+    return match ? match[1] : url; // ถ้า string ที่ให้มาเป็น ID อยู่แล้ว ก็ใช้ได้ตรงๆ
+}
+
+function loadYouTubeAPI() {
+    if (window.YT && window.YT.Player) {
+        createYTPlayer();
+        return;
+    }
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+    window.onYouTubeIframeAPIReady = createYTPlayer;
+}
+
+function createYTPlayer() {
+    const videoId = extractYouTubeId(YT_VIDEO_ID);
+    if (!videoId) return;
+
+    ytPlayer = new YT.Player('yt-player', {
+        height: '1',
+        width: '1',
+        videoId: videoId,
+        playerVars: {
+            autoplay: 0,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            loop: 1,
+            playlist: videoId // จำเป็นสำหรับให้ loop:1 ทำงานกับวิดีโอเดี่ยว
+        },
+        events: {
+            onReady: () => {
+                ytIsReady = true;
+                const musicBtn = document.getElementById('musicToggleBtn');
+                if (musicBtn) musicBtn.style.display = 'flex';
+                // ถ้าผู้ใช้ปลดล็อกซองไปแล้วก่อนที่ player จะโหลดเสร็จ ให้เล่นทันที
+                if (ytWantsToPlay) tryPlayMusic();
+            },
+            onError: () => {
+                // เล่นไม่ได้ (เช่น วิดีโอถูกจำกัดการฝัง) - ซ่อนปุ่มไปเลย
+                const musicBtn = document.getElementById('musicToggleBtn');
+                if (musicBtn) musicBtn.style.display = 'none';
+            }
+        }
+    });
+}
+
+function tryPlayMusic() {
+    if (!ytPlayer || !ytIsReady) return;
+    try {
+        ytPlayer.playVideo();
+        const musicBtn = document.getElementById('musicToggleBtn');
+        if (musicBtn) musicBtn.textContent = '🔊';
+    } catch (err) {
+        // เบราว์เซอร์บล็อก autoplay เสียง - ให้ผู้ใช้กดปุ่มลำโพงเองแทน
+    }
+}
+
+const musicToggleBtn = document.getElementById('musicToggleBtn');
+if (musicToggleBtn) {
+    musicToggleBtn.addEventListener('click', () => {
+        if (!ytPlayer || !ytIsReady) return;
+        const state = ytPlayer.getPlayerState();
+        // 1 = playing
+        if (state === 1 && !ytMuted) {
+            ytPlayer.mute();
+            ytMuted = true;
+            musicToggleBtn.textContent = '🔇';
+        } else if (ytMuted) {
+            ytPlayer.unMute();
+            ytMuted = false;
+            musicToggleBtn.textContent = '🔊';
+        } else {
+            ytPlayer.playVideo();
+            musicToggleBtn.textContent = '🔊';
+        }
+    });
+}
+
+loadYouTubeAPI();
+
 // ==================== ระบบกดค้างที่หน้า 1 ====================
 const holdBtn = document.getElementById('holdBtn');
 const holdContainer = document.getElementById('holdContainer');
@@ -103,6 +200,9 @@ function completeHold() {
     if (holdContainer) holdContainer.classList.remove('holding');
     if (envelopeCard) envelopeCard.classList.remove('urgent');
     if (hintText) hintText.innerText = "สำเร็จ!";
+
+    ytWantsToPlay = true;
+    tryPlayMusic();
 
     setTimeout(() => {
         if (envelopeOverlay) envelopeOverlay.classList.add('hide');
@@ -368,9 +468,31 @@ function init3DScene() {
 
     heartGeometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
     heartGeometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
+
+    // ไล่สีอนุภาคหัวใจ: โทนชมพูเข้มด้านล่าง ไล่ไปขาวอมชมพูด้านบน เหมือนภาพต้นแบบ
+    let heartMinY = Infinity, heartMaxY = -Infinity;
+    for (let i = 0; i < heartParticlesCount; i++) {
+        const y = targetPositions[i * 3 + 1];
+        if (y < heartMinY) heartMinY = y;
+        if (y > heartMaxY) heartMaxY = y;
+    }
+    const heartRangeY = (heartMaxY - heartMinY) || 1;
+    const heartColors = new Float32Array(heartParticlesCount * 3);
+    const heartColorBase = new THREE.Color(0xff1f8a);
+    const heartColorTip = new THREE.Color(0xffeaf6);
+    for (let i = 0; i < heartParticlesCount; i++) {
+        const idx = i * 3;
+        const t = (targetPositions[idx + 1] - heartMinY) / heartRangeY;
+        const mixed = heartColorBase.clone().lerp(heartColorTip, Math.pow(Math.max(0, Math.min(1, t)), 1.3));
+        heartColors[idx] = mixed.r;
+        heartColors[idx + 1] = mixed.g;
+        heartColors[idx + 2] = mixed.b;
+    }
+    heartGeometry.setAttribute('color', new THREE.BufferAttribute(heartColors, 3));
+
     const heartMaterial = new THREE.PointsMaterial({
-        color: 0xff33bb,
-        size: 0.22,
+        size: 0.2,
+        vertexColors: true,
         transparent: true,
         opacity: 0.95,
         blending: THREE.AdditiveBlending
@@ -410,6 +532,48 @@ function init3DScene() {
     }));
     scene.add(galaxyParticles);
 
+    // --- ดาวเคราะห์เรืองแสงพร้อมวงแหวน ตรงกลางกาแล็กซี่ (เหมือนภาพต้นแบบ) ---
+    function createPlanet() {
+        const group = new THREE.Group();
+
+        const bodyCanvas = document.createElement('canvas');
+        bodyCanvas.width = 256; bodyCanvas.height = 256;
+        const bctx = bodyCanvas.getContext('2d');
+        const bodyGrad = bctx.createRadialGradient(96, 88, 8, 128, 128, 150);
+        bodyGrad.addColorStop(0, '#fff3fb');
+        bodyGrad.addColorStop(0.45, '#ff9fd9');
+        bodyGrad.addColorStop(1, '#7a1258');
+        bctx.fillStyle = bodyGrad;
+        bctx.fillRect(0, 0, 256, 256);
+        const bodyTexture = new THREE.CanvasTexture(bodyCanvas);
+
+        const bodyGeo = new THREE.SphereGeometry(1.5, 32, 32);
+        const bodyMat = new THREE.MeshBasicMaterial({ map: bodyTexture });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        group.add(body);
+
+        const ringGeo = new THREE.RingGeometry(2.1, 3.6, 64);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xffb3e6,
+            transparent: true,
+            opacity: 0.35,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        ringMesh.rotation.x = Math.PI / 2 - 0.32;
+        group.add(ringMesh);
+
+        const glowLight = new THREE.PointLight(0xff8fd0, 3, 18);
+        group.add(glowLight);
+
+        group.position.set(0, -1.8, 0);
+        return group;
+    }
+    const planet = createPlanet();
+    scene.add(planet);
+
     const ringGroup = new THREE.Group();
     scene.add(ringGroup);
 
@@ -442,22 +606,29 @@ function init3DScene() {
         return new THREE.CanvasTexture(canvas);
     }
 
+    // แมวลอยอยู่สูงขึ้น ใกล้ฐานหัวใจ แทนที่จะอยู่ระดับวงแหวนล่างสุด
     const catTexture = createCatTexture();
-    for (let i = 0; i < 3; i++) {
+    const catCount = 3;
+    for (let i = 0; i < catCount; i++) {
         const spriteMat = new THREE.SpriteMaterial({ map: catTexture, transparent: true });
         const catSprite = new THREE.Sprite(spriteMat);
-        const angle = (i / 3) * Math.PI * 2 + 0.5;
-        catSprite.position.set(Math.cos(angle) * 8.5, -2.5, Math.sin(angle) * 8.5);
-        catSprite.scale.set(2.0, 2.0, 1);
+        const angle = (i / catCount) * Math.PI * 2 + 0.5;
+        catSprite.position.set(Math.cos(angle) * 7.5, 0.8, Math.sin(angle) * 7.5);
+        catSprite.scale.set(1.7, 1.7, 1);
         ringGroup.add(catSprite);
     }
 
-    const labels = ["LOVE U", "LOVE U", "LOVE U", "LOVE U", "LOVE U", "LOVE U"];
+    // ป้ายข้อความหลากหลายรอบวง เหมือนภาพต้นแบบ (แทนคำเดิม "LOVE U" ซ้ำ)
+    const labels = [
+        "FOREVER", "ALWAYS U", "ANNIVERSARY", "ONLY U",
+        "MY HEART", "LOVE U THE MOST", "OUR LOVE",
+        "HAPPY ANNIVERSARY", "LOVE U"
+    ];
     labels.forEach((text, index) => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = 512; canvas.height = 128;
-        ctx.font = 'Bold 32px Prompt, sans-serif';
+        ctx.font = 'Bold 30px Prompt, sans-serif';
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = '#ff007f';
         ctx.shadowBlur = 16;
@@ -466,8 +637,8 @@ function init3DScene() {
 
         const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
         const angle = (index / labels.length) * Math.PI * 2;
-        sprite.position.set(Math.cos(angle) * 10.5, -3.0, Math.sin(angle) * 10.5);
-        sprite.scale.set(5.0, 1.25, 1);
+        sprite.position.set(Math.cos(angle) * 10.5, -0.8, Math.sin(angle) * 10.5);
+        sprite.scale.set(4.4, 1.1, 1);
         ringGroup.add(sprite);
     });
 
@@ -590,6 +761,7 @@ function init3DScene() {
         heartParticles.rotation.y += 0.004 * frameScale;
         galaxyParticles.rotation.y += 0.002 * frameScale;
         ringGroup.rotation.y += 0.0025 * frameScale;
+        planet.rotation.y += 0.006 * frameScale;
 
         targetX += (mouseX - targetX) * Math.min(0.05 * frameScale, 1);
         targetY += (mouseY - targetY) * Math.min(0.05 * frameScale, 1);
